@@ -32,6 +32,9 @@ set(PROJECT_SOURCES
         src/aboutdialog.hpp
         src/aboutdialog.cpp
         src/aboutdialog.ui
+        # Shortcut manager
+        src/fcmdshortcutmanager.hpp
+        src/fcmdshortcutmanager.cpp
         # i18n
         ${TS_FILES}
 )

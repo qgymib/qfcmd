@@ -7,12 +7,11 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
+    , m_shortcut_mgr(this)
 {
     ui->setupUi(this);
     ui->centralwidget->setStretchFactor(1, 1);
-
-    connect(ui->actionShowToolbar, &QAction::triggered, this, &MainWindow::onViewShowToolbarChange);
-    connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::showAboutDialog);
+    setupActions();
 
     {
         QFileSystemModel* model = new QFileSystemModel;
@@ -42,15 +41,23 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
+    ui = nullptr;
 }
 
-void MainWindow::showAboutDialog()
+void MainWindow::setupActions()
+{
+    /* Register all known actions. */
+    m_shortcut_mgr.regAction(ui->actionShowToolbar, this, &MainWindow::actionShowToolbarChange);
+    m_shortcut_mgr.regAction(ui->actionAbout, this, &MainWindow::actionAboutDialog);
+}
+
+void MainWindow::actionAboutDialog()
 {
     AboutDialog dialog(this);
     dialog.exec();
 }
 
-void MainWindow::onViewShowToolbarChange()
+void MainWindow::actionShowToolbarChange()
 {
     bool need_visible = !ui->toolBar->isVisible();
 

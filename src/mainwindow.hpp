@@ -4,6 +4,8 @@
 #include <QMainWindow>
 #include <QSettings>
 
+#include "fcmdshortcutmanager.hpp"
+
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
@@ -18,12 +20,16 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+private:
+    void setupActions();
+
 private slots:
-    void showAboutDialog();
-    void onViewShowToolbarChange();
+    void actionAboutDialog();
+    void actionShowToolbarChange();
 
 private:
-    Ui::MainWindow* ui;
-    QSettings       settings;
+    Ui::MainWindow*     ui;
+    QSettings           settings;
+    FcmdShortCutManager m_shortcut_mgr;
 };
 #endif // MAINWINDOW_H

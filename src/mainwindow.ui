@@ -55,6 +55,13 @@
     </property>
     <addaction name="actionShowToolbar"/>
    </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="actionPerferences"/>
+   </widget>
+   <addaction name="menuEdit"/>
    <addaction name="menuView"/>
    <addaction name="menuHelp"/>
   </widget>
@@ -81,6 +88,11 @@
    </property>
    <property name="text">
     <string>Show Toolbar</string>
+   </property>
+  </action>
+  <action name="actionPerferences">
+   <property name="text">
+    <string>Perferences</string>
    </property>
   </action>
  </widget>

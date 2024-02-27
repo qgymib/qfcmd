@@ -24,3 +24,15 @@ void FcmdShortCutManager::setShortcut(const QString& text, const QKeySequence& s
     QAction* action = it.value();
     action->setShortcut(shortcut);
 }
+
+KeyboardShortcuts::ShortcutMap FcmdShortCutManager::getShortcutMap()
+{
+    KeyboardShortcuts::ShortcutMap record;
+
+    foreach (QAction* action, m_actions)
+    {
+        record[action->text()] = action->shortcut();
+    }
+
+    return record;
+}

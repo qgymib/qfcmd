@@ -1,8 +1,11 @@
+#include <QFileSystemModel>
+
 #include "mainwindow.hpp"
 #include "ui_mainwindow.h"
 #include "foldertab.hpp"
 #include "aboutdialog.hpp"
-#include <QFileSystemModel>
+#include "perferencesdialog.hpp"
+#include "keyboardshortcutsform.hpp"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -47,6 +50,7 @@ MainWindow::~MainWindow()
 void MainWindow::setupActions()
 {
     /* Register all known actions. */
+    m_shortcut_mgr.regAction(ui->actionPerferences, this, &MainWindow::actionPerferences);
     m_shortcut_mgr.regAction(ui->actionShowToolbar, this, &MainWindow::actionShowToolbarChange);
     m_shortcut_mgr.regAction(ui->actionAbout, this, &MainWindow::actionAboutDialog);
 }
@@ -65,4 +69,13 @@ void MainWindow::actionShowToolbarChange()
 
     ui->actionShowToolbar->setChecked(need_visible);
     ui->toolBar->setVisible(need_visible);
+}
+
+void MainWindow::actionPerferences()
+{
+    PerferencesDialog dialog(this);
+
+    dialog.addConfigWidget(new KeyboardShortcutsForm(m_shortcut_mgr.getShortcutMap()));
+
+    dialog.exec();
 }

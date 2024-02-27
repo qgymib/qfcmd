@@ -5,10 +5,12 @@
 #include <QAction>
 #include <QMap>
 #include <QErrorMessage>
+#include "model/keyboardshortcuts.hpp"
 
 class FcmdShortCutManager : public QObject
 {
     Q_OBJECT
+
 public:
     explicit FcmdShortCutManager(QWidget *parent);
     virtual ~FcmdShortCutManager();
@@ -76,6 +78,8 @@ public:
      * @throws None
      */
     void setShortcut(const QString& text, const QKeySequence& shortcut);
+
+    KeyboardShortcuts::ShortcutMap getShortcutMap();
 
 signals:
 

@@ -26,6 +26,7 @@ private:
 private slots:
     void actionAboutDialog();
     void actionShowToolbarChange();
+    void actionPerferences();
 
 private:
     Ui::MainWindow*     ui;

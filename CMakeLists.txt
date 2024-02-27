@@ -24,6 +24,14 @@ set(PROJECT_SOURCES
         # TabWidget
         src/fcmdtabwidget.hpp
         src/fcmdtabwidget.cpp
+        # PerferencesDialog
+        src/perferencesdialog.hpp
+        src/perferencesdialog.cpp
+        src/perferencesdialog.ui
+        # KeyboardShortcutsForm
+        src/keyboardshortcutsform.hpp
+        src/keyboardshortcutsform.cpp
+        src/keyboardshortcutsform.ui
         # FolderTab
         src/foldertab.hpp
         src/foldertab.cpp
@@ -35,6 +43,9 @@ set(PROJECT_SOURCES
         # Shortcut manager
         src/fcmdshortcutmanager.hpp
         src/fcmdshortcutmanager.cpp
+        # Model
+        src/model/keyboardshortcuts.hpp
+        src/model/keyboardshortcuts.cpp
         # i18n
         ${TS_FILES}
 )

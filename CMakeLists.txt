@@ -15,10 +15,21 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets LinguistTools)
 set(TS_FILES lang/qfcmd_zh_CN.ts)
 
 set(PROJECT_SOURCES
+        # Entrypoint
         src/main.cpp
+        # MainWindow
         src/mainwindow.cpp
-        src/mainwindow.h
+        src/mainwindow.hpp
         src/mainwindow.ui
+        # FolderTab
+        src/foldertab.hpp
+        src/foldertab.cpp
+        src/foldertab.ui
+        # About dialog
+        src/aboutdialog.hpp
+        src/aboutdialog.cpp
+        src/aboutdialog.ui
+        # i18n
         ${TS_FILES}
 )
 
@@ -26,7 +37,6 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(qfcmd
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET qfcmd APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

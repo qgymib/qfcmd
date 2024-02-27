@@ -74,3 +74,6 @@ CMakeLists.txt.user*
 
 # Common build directory
 /build
+
+# vscode
+/.vscode

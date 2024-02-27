@@ -1,7 +1,8 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#ifndef MAINWINDOW_HPP
+#define MAINWINDOW_HPP
 
 #include <QMainWindow>
+#include <QSettings>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -17,7 +18,12 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+private slots:
+    void showAboutDialog();
+    void onViewShowToolbarChange();
+
 private:
-    Ui::MainWindow *ui;
+    Ui::MainWindow* ui;
+    QSettings       settings;
 };
 #endif // MAINWINDOW_H

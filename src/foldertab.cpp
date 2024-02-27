@@ -101,7 +101,9 @@ void FolderTab::cd(const QString& path)
 {
     ui->url->setPlainText(path);
     ui->tableView->setRootIndex(m_model->setRootPath(path));
-    setWindowTitle(path);
+
+    QDir dir(path);
+    setWindowTitle(dir.dirName());
 }
 
 void FolderTab::cd_with_history(const QString& path)

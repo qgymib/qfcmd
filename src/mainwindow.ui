@@ -22,12 +22,12 @@
     <property name="orientation">
      <enum>Qt::Horizontal</enum>
     </property>
-    <widget class="QTabWidget" name="leftPanel">
+    <widget class="FcmdTabWidget" name="leftPanel">
      <property name="movable">
       <bool>true</bool>
      </property>
     </widget>
-    <widget class="QTabWidget" name="rightPanel">
+    <widget class="FcmdTabWidget" name="rightPanel">
      <property name="movable">
       <bool>true</bool>
      </property>
@@ -84,6 +84,14 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>FcmdTabWidget</class>
+   <extends>QTabWidget</extends>
+   <header>fcmdtabwidget.hpp</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

@@ -21,6 +21,9 @@ set(PROJECT_SOURCES
         src/mainwindow.cpp
         src/mainwindow.hpp
         src/mainwindow.ui
+        # TabWidget
+        src/fcmdtabwidget.hpp
+        src/fcmdtabwidget.cpp
         # FolderTab
         src/foldertab.hpp
         src/foldertab.cpp
@@ -62,6 +65,13 @@ else()
     qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 endif()
 
+target_include_directories(qfcmd
+    PUBLIC
+        $<INSTALL_INTERFACE:include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
 target_link_libraries(qfcmd PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.

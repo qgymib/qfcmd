@@ -26,17 +26,17 @@ MainWindow::MainWindow(QWidget *parent)
         ui->actionShowToolbar->setChecked(visible);
     }
 
-    FolderTab* tab = new FolderTab;
-    ui->leftPanel->addTab(tab, "test1");
+    FolderTab* tab = new FolderTab(QDir::homePath());
+    ui->leftPanel->addTab(tab, tab->windowTitle());
 
     tab = new FolderTab;
-    ui->leftPanel->addTab(tab, "test2");
+    ui->leftPanel->addTab(tab, tab->windowTitle());
+
+    tab = new FolderTab(QDir::homePath());
+    ui->rightPanel->addTab(tab, tab->windowTitle());
 
     tab = new FolderTab;
-    ui->rightPanel->addTab(tab, "test3");
-
-    tab = new FolderTab;
-    ui->rightPanel->addTab(tab, "test4");
+    ui->rightPanel->addTab(tab, tab->windowTitle());
 }
 
 MainWindow::~MainWindow()

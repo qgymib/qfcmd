@@ -16,6 +16,7 @@ public:
 
 public slots:
     void onUpdateTabTitle(const QString& title);
+    void onTabCloseRequest(int index);
 };
 
 #endif // FCMDTABWIDGET_HPP

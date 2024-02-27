@@ -1,6 +1,8 @@
+#include <QCommonStyle>
+#include <QDesktopServices>
+
 #include "foldertab.hpp"
 #include "ui_foldertab.h"
-#include <QCommonStyle>
 
 FolderTab::FolderTab(QWidget *parent)
     : FolderTab(QDir::currentPath(), parent)
@@ -26,7 +28,6 @@ FolderTab::FolderTab(const QString& path, QWidget *parent)
         m_cfg_path_max_history = 1024;
         cd_with_history(path);
     }
-    update_ui_visibility();
 
     connect(ui->goBack, &QPushButton::clicked, this, &FolderTab::onGoBackClicked);
     connect(ui->goForward, &QPushButton::clicked, this, &FolderTab::onGoForwardClicked);
@@ -47,7 +48,6 @@ void FolderTab::onGoBackClicked()
         QString path = m_path_history[m_path_idx];
         cd(path);
     }
-    update_ui_visibility();
 }
 
 void FolderTab::onGoForwardClicked()
@@ -58,7 +58,6 @@ void FolderTab::onGoForwardClicked()
         QString path = m_path_history[m_path_idx];
         cd(path);
     }
-    update_ui_visibility();
 }
 
 void FolderTab::onGoUpClicked()
@@ -71,21 +70,20 @@ void FolderTab::onGoUpClicked()
     }
 
     cd_with_history(dir.absolutePath());
-    update_ui_visibility();
 }
 
 void FolderTab::onTableViewDoubleClicked(const QModelIndex &index)
 {
-    /*
-     * If it is a directory, CD to it.
-     */
+    const QString path = m_model->filePath(index);
+
     if (m_model->isDir(index))
-    {
-        QString path = m_model->filePath(index);
+    {/* Open directory. */
         cd_with_history(path);
     }
-
-    update_ui_visibility();
+    else
+    {/* Open file. */
+        QDesktopServices::openUrl(QUrl(path));
+    }
 }
 
 void FolderTab::update_ui_visibility()
@@ -104,6 +102,8 @@ void FolderTab::cd(const QString& path)
 
     QDir dir(path);
     setWindowTitle(dir.dirName());
+
+    update_ui_visibility();
 }
 
 void FolderTab::cd_with_history(const QString& path)

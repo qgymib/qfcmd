@@ -46,6 +46,9 @@ set(PROJECT_SOURCES
         # Model
         src/model/keyboardshortcuts.hpp
         src/model/keyboardshortcuts.cpp
+        # Settings
+        src/view/settingsdialog.hpp
+        src/view/settingsdialog.cpp
         # i18n
         ${TS_FILES}
 )

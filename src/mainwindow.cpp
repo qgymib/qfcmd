@@ -6,6 +6,7 @@
 #include "aboutdialog.hpp"
 #include "perferencesdialog.hpp"
 #include "keyboardshortcutsform.hpp"
+#include "view/settingsdialog.hpp"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -73,9 +74,10 @@ void MainWindow::actionShowToolbarChange()
 
 void MainWindow::actionPerferences()
 {
-    PerferencesDialog dialog(this);
+    //PerferencesDialog dialog(this);
+    //dialog.addConfigWidget(new KeyboardShortcutsForm(m_shortcut_mgr.getShortcutMap()));
+    //dialog.exec();
 
-    dialog.addConfigWidget(new KeyboardShortcutsForm(m_shortcut_mgr.getShortcutMap()));
-
+    qfcmd::SettingsDialog dialog(tr("Preferences"), this);
     dialog.exec();
 }

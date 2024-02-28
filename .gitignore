@@ -77,3 +77,8 @@ CMakeLists.txt.user*
 
 # vscode
 /.vscode
+
+# Visual Studio
+/.vs
+/out
+/CMakeSettings.json

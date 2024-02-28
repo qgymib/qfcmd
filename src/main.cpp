@@ -48,13 +48,13 @@ static void _setup_app(QApplication& a)
     if (parser.isSet(opt_version))
     {
         parser.showVersion();
-        Q_UNREACHABLE_RETURN();
+        Q_UNREACHABLE();
     }
 
     if (parser.isSet(opt_help))
     {
         parser.showHelp();
-        Q_UNREACHABLE_RETURN();
+        Q_UNREACHABLE();
     }
 
     /* Set config file format and location. */

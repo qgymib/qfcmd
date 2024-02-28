@@ -26,10 +26,8 @@ public:
      *
      * @return a pointer to the newly created QAction
      */
-    template<typename Func>
-    QAction* newAction(const QString& text,
-        const typename QtPrivate::ContextTypeForFunctor<Func>::ContextType *context,
-        Func &&slot,
+    template<typename Receiver, typename Slot>
+    QAction* newAction(const QString& text, Receiver* context, Slot slot,
         QObject *parent = nullptr)
     {
         QAction* action = new QAction(text, parent);
@@ -47,10 +45,8 @@ public:
      *
      * @throws N/A
      */
-    template<typename Func>
-    QAction* regAction(QAction* action,
-                        const typename QtPrivate::ContextTypeForFunctor<Func>::ContextType *context,
-                        Func &&slot)
+    template<typename Receiver, typename Slot>
+    QAction* regAction(QAction* action, Receiver* context, Slot slot)
     {
         QString text = action->text();
         if (m_actions.contains(text))

@@ -14,6 +14,7 @@
 #include <QFileSystemModel>
 
 #if defined(_WIN32)
+#include <QProcess>
 #include "utils/win32.hpp"
 #else
 #include <QDBusInterface>
@@ -179,6 +180,16 @@ static void _folder_tab_cd(qfcmd::FolderTabInner* inner, const QString& path)
     _update_ui_visibility(inner);
 }
 
+/**
+ * Change the directory with history tracking.
+ *
+ * @param inner pointer to the FolderTabInner instance
+ * @param path the new directory path
+ *
+ * @return void
+ *
+ * @throws None
+ */
 static void _folder_tab_cd_with_history(qfcmd::FolderTabInner* inner, const QString& path)
 {
     if (inner->path_history.size() > 0 && inner->path_idx < inner->path_history.size() - 1)
@@ -224,8 +235,8 @@ qfcmd::FolderTab::FolderTab(const QString& path, QWidget *parent)
     connect(m_inner->goBack, &QPushButton::clicked, this, &FolderTab::onGoBackClicked);
     connect(m_inner->goForward, &QPushButton::clicked, this, &FolderTab::onGoForwardClicked);
     connect(m_inner->goUp, &QPushButton::clicked, this, &FolderTab::onGoUpClicked);
-    connect(m_inner->tableView, &QTableView::doubleClicked, this, &FolderTab::onTableViewDoubleClicked);
-    connect(m_inner->tableView, &QTableView::customContextMenuRequested, this, &FolderTab::onTableViewContextMenuRequested);
+    connect(m_inner->tableView, &QTableView::doubleClicked, this, &FolderTab::slotOpenItem);
+    connect(m_inner->tableView, &QTableView::customContextMenuRequested, this, &FolderTab::slotTableViewContextMenuRequested);
 }
 
 qfcmd::FolderTab::~FolderTab()
@@ -265,8 +276,9 @@ void qfcmd::FolderTab::onGoUpClicked()
     _folder_tab_cd_with_history(m_inner, dir.absolutePath());
 }
 
-void qfcmd::FolderTab::onTableViewDoubleClicked(const QModelIndex &index)
+void qfcmd::FolderTab::slotOpenItem()
 {
+    QModelIndex index = m_inner->tableView->currentIndex();
     const QString path = m_inner->model->filePath(index);
 
     if (m_inner->model->isDir(index))
@@ -279,9 +291,21 @@ void qfcmd::FolderTab::onTableViewDoubleClicked(const QModelIndex &index)
     }
 }
 
-void qfcmd::FolderTab::onTableViewContextMenuRequested(QPoint pos)
+void qfcmd::FolderTab::slotTableViewContextMenuRequested(QPoint pos)
 {
+    const QModelIndex idx = m_inner->tableView->indexAt(pos);
+    const QFileInfo info = m_inner->model->fileInfo(idx);
     QMenu* menu = new QMenu(this);
+    menu->addAction(tr("Open"), this, &FolderTab::slotOpenItem);
+    if (info.isDir())
+    {
+        // TODO: Open in new tab.
+    }
+    else
+    {
+        menu->addAction(tr("Open with..."), this, &FolderTab::slotOpenFileWith);
+    }
+
     menu->addAction(tr("Properties"), this, &FolderTab::slotShowProperties);
     menu->exec(m_inner->tableView->viewport()->mapToGlobal(pos));
 }
@@ -291,4 +315,17 @@ void qfcmd::FolderTab::slotShowProperties()
     QModelIndex index = m_inner->tableView->currentIndex();
     const QString path = m_inner->model->filePath(index);
     _show_file_properties(path);
+}
+
+void qfcmd::FolderTab::slotOpenFileWith()
+{
+    QModelIndex index = m_inner->tableView->currentIndex();
+    QString path = m_inner->model->filePath(index);
+    path = QDir::toNativeSeparators(path);
+
+#if defined(_WIN32)
+    QProcess::execute("Rundll32", QStringList() << "Shell32.dll,OpenAs_RunDLL" << path);
+#else
+    // TODO: Implement on Linux.
+#endif
 }

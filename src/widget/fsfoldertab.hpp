@@ -18,13 +18,19 @@ public:
 
 private slots:
     /**
-     * @brief On double click event on `tableView`.
+     * @brief Open focus item.
      */
-    void onTableViewDoubleClicked(const QModelIndex &index);
+    void slotOpenItem();
+
+    /**
+     * @brief Open focus file with.
+     */
+    void slotOpenFileWith();
+
     void onGoBackClicked();
     void onGoForwardClicked();
     void onGoUpClicked();
-    void onTableViewContextMenuRequested(QPoint pos);
+    void slotTableViewContextMenuRequested(QPoint pos);
     void slotShowProperties();
 
 private:

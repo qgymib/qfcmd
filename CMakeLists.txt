@@ -21,9 +21,6 @@ set(PROJECT_SOURCES
         src/mainwindow.cpp
         src/mainwindow.hpp
         src/mainwindow.ui
-        # TabWidget
-        src/fcmdtabwidget.hpp
-        src/fcmdtabwidget.cpp
         # PerferencesDialog
         src/perferencesdialog.hpp
         src/perferencesdialog.cpp
@@ -33,9 +30,12 @@ set(PROJECT_SOURCES
         src/keyboardshortcutsform.cpp
         src/keyboardshortcutsform.ui
         # FolderTab
-        src/foldertab.hpp
-        src/foldertab.cpp
-        src/foldertab.ui
+        src/widget/fsfoldertab.hpp
+        src/widget/fsfoldertab.cpp
+        src/widget/fstabwidget.hpp
+        src/widget/fstabwidget.cpp
+        src/widget/fstreeview.hpp
+        src/widget/fstreeview.cpp
         # About dialog
         src/aboutdialog.hpp
         src/aboutdialog.cpp
@@ -46,9 +46,6 @@ set(PROJECT_SOURCES
         # Model
         src/model/keyboardshortcuts.hpp
         src/model/keyboardshortcuts.cpp
-        # View
-        src/view/fstreeview.hpp
-        src/view/fstreeview.cpp
         # Utils
         src/utils/win32.hpp
         src/utils/win32.cpp

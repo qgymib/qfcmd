@@ -1,31 +1,47 @@
-#if !defined(WIN32_HPP) && defined(_WIN32)
-#define WIN32_HPP
+#if !defined(QFCMD_WIN32_HPP) && defined(_WIN32)
+#define QFCMD_WIN32_HPP
 
 #include <QString>
 #include <Windows.h>
 
-namespace qfcmd
-{
+namespace qfcmd {
 
 class wchar
 {
 public:
-	wchar(const wchar_t* str);
-	virtual ~wchar();
+    wchar(const wchar& orig);
+    virtual ~wchar();
 
 public:
-	const wchar_t* data() const;
+    /**
+     * @brief Convert QString to wchar_t.
+     * @param[in] str   The QString.
+     * @return          The wchar_t string.
+     */
+    static wchar fromQString(const QString& str);
+
+public:
+    /**
+     * @brief Get the wchar_t string.
+     * @return The wchar_t string.
+     */
+    const wchar_t* data() const;
+
+    /**
+     * @brief Convert wchar_t to QString.
+     * @return The QString.
+     */
+    QString toQString() const;
 
 private:
-	wchar_t* m_str;
+    /* Default constructor is not allowed. */
+    wchar();
+
+private:
+    wchar_t*    m_str;
+    int         m_size;
 };
 
-class Win32
-{
-public:
-	static wchar StringToWide(const QString& str);
-};
+} /* namespace qfcmd */
 
-};
-
-#endif // WIN32_HPP
+#endif // QFCMD_WIN32_HPP

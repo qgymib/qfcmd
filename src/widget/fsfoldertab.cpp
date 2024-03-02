@@ -1,0 +1,294 @@
+#include <QCommonStyle>
+#include <QDesktopServices>
+#include <QTableWidgetItem>
+#include <QMenu>
+#include <QVariant>
+#include <QApplication>
+#include <QHBoxLayout>
+#include <QHeaderView>
+#include <QPlainTextEdit>
+#include <QPushButton>
+#include <QTableView>
+#include <QVBoxLayout>
+#include <QWidget>
+#include <QFileSystemModel>
+
+#if defined(_WIN32)
+#include "utils/win32.hpp"
+#else
+#include <QDBusInterface>
+#include <QDBusMessage>
+#include <QProcess>
+#endif
+
+#include "fsfoldertab.hpp"
+
+namespace qfcmd {
+struct FolderTabInner
+{
+    FolderTab*          parent;
+
+    QVBoxLayout*        verticalLayout;
+    QHBoxLayout*        horizontalLayout;
+    QPushButton*        goBack;
+    QPushButton*        goForward;
+    QPushButton*        goUp;
+    QPlainTextEdit*     url;
+    QTableView*         tableView;
+
+    QFileSystemModel*   model;                  /* File system model. */
+    size_t              cfg_path_max_history;   /* Max number of path history.*/
+    size_t              path_idx;               /* Current path. */
+    QStringList         path_history;           /* Path history. */
+};
+} /* namespace qfcmd */
+
+#if defined(_WIN32)
+static void _show_file_properties(const QString& path)
+{
+    qfcmd::wchar w_path = qfcmd::wchar::fromQString(path);
+
+    SHELLEXECUTEINFOW aShExecInfo;
+    ZeroMemory(&aShExecInfo, sizeof(SHELLEXECUTEINFOW));
+    aShExecInfo.cbSize = sizeof(aShExecInfo);
+    aShExecInfo.fMask = SEE_MASK_INVOKEIDLIST;
+    aShExecInfo.lpVerb = L"properties";
+    aShExecInfo.lpFile = w_path.data();
+    ShellExecuteExW(&aShExecInfo);
+}
+#else
+static void _show_file_properties(const QString& path)
+{
+    QDBusInterface iface("org.freedesktop.FileManager1",
+        "/org/freedesktop/FileManager1",
+        "org.freedesktop.FileManager1",
+        QDBusConnection::sessionBus());
+
+    if (!iface.isValid())
+    {
+        return;
+    }
+
+    QDBusMessage rsp = iface.call("ShowItemProperties", QStringList() << QUrl::fromLocalFile(path).toString());
+    if (rsp.type() == QDBusMessage::ErrorMessage)
+    {
+        qWarning() << "Error: " << rsp.errorMessage();
+    }
+}
+#endif
+
+static void _folder_tabl_setup_inner(qfcmd::FolderTab* parent, qfcmd::FolderTabInner* ui)
+{
+    ui->parent = parent;
+
+    if (parent->objectName().isEmpty())
+    {
+        parent->setObjectName("FolderTab");
+    }
+
+    parent->resize(400, 300);
+    parent->setWindowTitle(QString::fromUtf8("Form"));
+    ui->verticalLayout = new QVBoxLayout(parent);
+    ui->verticalLayout->setObjectName("verticalLayout");
+    ui->horizontalLayout = new QHBoxLayout();
+    ui->horizontalLayout->setObjectName("horizontalLayout");
+    ui->goBack = new QPushButton(parent);
+    ui->goBack->setObjectName("goBack");
+    QSizePolicy sizePolicy(QSizePolicy::Policy::Fixed, QSizePolicy::Policy::Fixed);
+    sizePolicy.setHorizontalStretch(0);
+    sizePolicy.setVerticalStretch(0);
+    sizePolicy.setHeightForWidth(ui->goBack->sizePolicy().hasHeightForWidth());
+    ui->goBack->setSizePolicy(sizePolicy);
+    ui->goBack->setMaximumSize(QSize(32, 32));
+    ui->goBack->setText(QString::fromUtf8(""));
+    ui->goBack->setFlat(true);
+
+    ui->horizontalLayout->addWidget(ui->goBack);
+
+    ui->goForward = new QPushButton(parent);
+    ui->goForward->setObjectName("goForward");
+    sizePolicy.setHeightForWidth(ui->goForward->sizePolicy().hasHeightForWidth());
+    ui->goForward->setSizePolicy(sizePolicy);
+    ui->goForward->setMaximumSize(QSize(32, 32));
+    ui->goForward->setText(QString::fromUtf8(""));
+    ui->goForward->setFlat(true);
+
+    ui->horizontalLayout->addWidget(ui->goForward);
+
+    ui->goUp = new QPushButton(parent);
+    ui->goUp->setObjectName("goUp");
+    sizePolicy.setHeightForWidth(ui->goUp->sizePolicy().hasHeightForWidth());
+    ui->goUp->setSizePolicy(sizePolicy);
+    ui->goUp->setMaximumSize(QSize(32, 32));
+    ui->goUp->setText(QString::fromUtf8(""));
+    ui->goUp->setFlat(true);
+
+    ui->horizontalLayout->addWidget(ui->goUp);
+
+    ui->url = new QPlainTextEdit(parent);
+    ui->url->setObjectName("url");
+    QSizePolicy sizePolicy1(QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Fixed);
+    sizePolicy1.setHorizontalStretch(0);
+    sizePolicy1.setVerticalStretch(0);
+    sizePolicy1.setHeightForWidth(ui->url->sizePolicy().hasHeightForWidth());
+    ui->url->setSizePolicy(sizePolicy1);
+    ui->url->setMaximumSize(QSize(16777215, 32));
+    ui->url->setInputMethodHints(Qt::ImhNoAutoUppercase);
+    ui->url->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    ui->url->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    ui->url->setLineWrapMode(QPlainTextEdit::NoWrap);
+
+    ui->horizontalLayout->addWidget(ui->url);
+
+    ui->verticalLayout->addLayout(ui->horizontalLayout);
+
+    ui->tableView = new QTableView(parent);
+    ui->tableView->setObjectName("tableView");
+    ui->tableView->setContextMenuPolicy(Qt::CustomContextMenu);
+    ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->tableView->setShowGrid(false);
+    ui->tableView->setWordWrap(false);
+    ui->tableView->verticalHeader()->setVisible(false);
+
+    ui->verticalLayout->addWidget(ui->tableView);
+
+    QMetaObject::connectSlotsByName(parent);
+}
+
+static void _update_ui_visibility(qfcmd::FolderTabInner* inner)
+{
+    inner->goBack->setEnabled(inner->path_idx > 0);
+    inner->goForward->setEnabled(inner->path_idx < inner->path_history.size() - 1);
+
+    QDir dir(inner->path_history[inner->path_idx]);
+    inner->goUp->setEnabled(dir.cdUp());
+}
+
+/**
+ * @brief Set current folder.
+ * @param[in] path - path to folder.
+ */
+static void _folder_tab_cd(qfcmd::FolderTabInner* inner, const QString& path)
+{
+    inner->url->setPlainText(path);
+    inner->tableView->setRootIndex(inner->model->setRootPath(path));
+
+    QDir dir(path);
+    inner->parent->setWindowTitle(dir.dirName());
+
+    _update_ui_visibility(inner);
+}
+
+static void _folder_tab_cd_with_history(qfcmd::FolderTabInner* inner, const QString& path)
+{
+    if (inner->path_history.size() > 0 && inner->path_idx < inner->path_history.size() - 1)
+    {
+        inner->path_history.erase(inner->path_history.begin() + inner->path_idx + 1, inner->path_history.end());
+    }
+    inner->path_history.push_back(path);
+
+    if (inner->path_history.size() > inner->cfg_path_max_history)
+    {
+        inner->path_history.pop_front();
+    }
+    inner->path_idx = inner->path_history.size() - 1;
+
+    _folder_tab_cd(inner, path);
+}
+
+qfcmd::FolderTab::FolderTab(QWidget *parent)
+    : FolderTab(QDir::currentPath(), parent)
+{
+}
+
+qfcmd::FolderTab::FolderTab(const QString& path, QWidget *parent)
+    : QWidget(parent), m_inner(new qfcmd::FolderTabInner)
+{
+    _folder_tabl_setup_inner(this, m_inner);
+
+    {
+        QCommonStyle style;
+        m_inner->goBack->setIcon(style.standardIcon(QStyle::SP_ArrowBack));
+        m_inner->goForward->setIcon(style.standardIcon(QStyle::SP_ArrowForward));
+        m_inner->goUp->setIcon(style.standardIcon(QStyle::SP_ArrowUp));
+    }
+
+    {
+        m_inner->model = new QFileSystemModel;
+        m_inner->tableView->setModel(m_inner->model);
+
+        m_inner->cfg_path_max_history = 1024;
+        _folder_tab_cd_with_history(m_inner, path);
+    }
+
+    connect(m_inner->goBack, &QPushButton::clicked, this, &FolderTab::onGoBackClicked);
+    connect(m_inner->goForward, &QPushButton::clicked, this, &FolderTab::onGoForwardClicked);
+    connect(m_inner->goUp, &QPushButton::clicked, this, &FolderTab::onGoUpClicked);
+    connect(m_inner->tableView, &QTableView::doubleClicked, this, &FolderTab::onTableViewDoubleClicked);
+    connect(m_inner->tableView, &QTableView::customContextMenuRequested, this, &FolderTab::onTableViewContextMenuRequested);
+}
+
+qfcmd::FolderTab::~FolderTab()
+{
+    delete m_inner;
+}
+
+void qfcmd::FolderTab::onGoBackClicked()
+{
+    if (m_inner->path_idx > 0)
+    {
+        m_inner->path_idx--;
+        QString path = m_inner->path_history[m_inner->path_idx];
+        _folder_tab_cd(m_inner, path);
+    }
+}
+
+void qfcmd::FolderTab::onGoForwardClicked()
+{
+    if (m_inner->path_idx < m_inner->path_history.size() - 1)
+    {
+        m_inner->path_idx++;
+        QString path = m_inner->path_history[m_inner->path_idx];
+        _folder_tab_cd(m_inner, path);
+    }
+}
+
+void qfcmd::FolderTab::onGoUpClicked()
+{
+    QString path = m_inner->path_history[m_inner->path_idx];
+    QDir dir(path);
+    if (!dir.cdUp())
+    {
+        return;
+    }
+
+    _folder_tab_cd_with_history(m_inner, dir.absolutePath());
+}
+
+void qfcmd::FolderTab::onTableViewDoubleClicked(const QModelIndex &index)
+{
+    const QString path = m_inner->model->filePath(index);
+
+    if (m_inner->model->isDir(index))
+    {/* Open directory. */
+        _folder_tab_cd_with_history(m_inner, path);
+    }
+    else
+    {/* Open file. */
+        QDesktopServices::openUrl(QUrl(path));
+    }
+}
+
+void qfcmd::FolderTab::onTableViewContextMenuRequested(QPoint pos)
+{
+    QMenu* menu = new QMenu(this);
+    menu->addAction(tr("Properties"), this, &FolderTab::slotShowProperties);
+    menu->exec(m_inner->tableView->viewport()->mapToGlobal(pos));
+}
+
+void qfcmd::FolderTab::slotShowProperties()
+{
+    QModelIndex index = m_inner->tableView->currentIndex();
+    const QString path = m_inner->model->filePath(index);
+    _show_file_properties(path);
+}

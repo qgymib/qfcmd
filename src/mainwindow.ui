@@ -22,12 +22,12 @@
     <property name="orientation">
      <enum>Qt::Horizontal</enum>
     </property>
-    <widget class="FcmdTabWidget" name="leftPanel">
+    <widget class="qfcmd::FsTabWidget" name="leftPanel">
      <property name="movable">
       <bool>true</bool>
      </property>
     </widget>
-    <widget class="FcmdTabWidget" name="rightPanel">
+    <widget class="qfcmd::FsTabWidget" name="rightPanel">
      <property name="movable">
       <bool>true</bool>
      </property>
@@ -40,7 +40,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>17</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuHelp">
@@ -98,15 +98,15 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>FcmdTabWidget</class>
+   <class>qfcmd::FsTabWidget</class>
    <extends>QTabWidget</extends>
-   <header>fcmdtabwidget.hpp</header>
+   <header>widget/fstabwidget.hpp</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>qfcmd::FsTreeView</class>
    <extends>QTreeView</extends>
-   <header>view/fstreeview.hpp</header>
+   <header>widget/fstreeview.hpp</header>
   </customwidget>
  </customwidgets>
  <resources/>

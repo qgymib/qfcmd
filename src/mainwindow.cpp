@@ -1,8 +1,7 @@
-
+#include <QDir>
 
 #include "mainwindow.hpp"
 #include "ui_mainwindow.h"
-#include "foldertab.hpp"
 #include "aboutdialog.hpp"
 #include "perferencesdialog.hpp"
 #include "keyboardshortcutsform.hpp"
@@ -16,27 +15,15 @@ MainWindow::MainWindow(QWidget *parent)
     ui->centralwidget->setStretchFactor(1, 1);
     setupActions();
 
-	{
-		ui->treeView->slotChangeDirectory(QDir::currentPath());
-	}
+    {
+        ui->treeView->slotChangeDirectory(QDir::currentPath());
+    }
 
     {
         bool visible = settings.value("view/ShowToolbar", true).toBool();
         ui->toolBar->setVisible(visible);
         ui->actionShowToolbar->setChecked(visible);
     }
-
-    FolderTab* tab = new FolderTab(QDir::homePath());
-    ui->leftPanel->addTab(tab, tab->windowTitle());
-
-    tab = new FolderTab;
-    ui->leftPanel->addTab(tab, tab->windowTitle());
-
-    tab = new FolderTab(QDir::homePath());
-    ui->rightPanel->addTab(tab, tab->windowTitle());
-
-    tab = new FolderTab;
-    ui->rightPanel->addTab(tab, tab->windowTitle());
 }
 
 MainWindow::~MainWindow()

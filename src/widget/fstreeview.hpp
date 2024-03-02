@@ -1,11 +1,11 @@
-#ifndef FSTREEVIEW_HPP
-#define FSTREEVIEW_HPP
+#ifndef QFCMD_FS_TREEVIEW_HPP
+#define QFCMD_FS_TREEVIEW_HPP
 
 #include <QTreeView>
-#include <QFileSystemModel>
 
-namespace qfcmd
-{
+namespace qfcmd {
+
+struct FsTreeViewInner;
 
 class FsTreeView : public QTreeView
 {
@@ -22,9 +22,9 @@ public slots:
 	void slotChangeDirectory(const QString& path);
 
 private:
-    QFileSystemModel* m_model;
+    FsTreeViewInner* m_inner;
 };
 
-}; /* namespace qfcmd */
+} /* namespace qfcmd */
 
-#endif // FSTREEVIEW_HPP
+#endif // QFCMD_FS_TREEVIEW_HPP

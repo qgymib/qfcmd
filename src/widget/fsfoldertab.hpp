@@ -16,6 +16,12 @@ public:
     explicit FolderTab(const QString& path, QWidget *parent = nullptr);
     ~FolderTab();
 
+signals:
+    /**
+     * @brief Open focus file in new tab.
+     */
+    void signalOpenInNewTab(const QString& path);
+
 private slots:
     /**
      * @brief Open focus item.
@@ -26,6 +32,11 @@ private slots:
      * @brief Open focus file with.
      */
     void slotOpenFileWith();
+
+    /**
+     * @brief Open focused directory in new tab.
+     */
+    void slotOpenInNewTab();
 
     void onGoBackClicked();
     void onGoForwardClicked();

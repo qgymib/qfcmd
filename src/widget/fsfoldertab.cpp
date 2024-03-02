@@ -299,7 +299,7 @@ void qfcmd::FolderTab::slotTableViewContextMenuRequested(QPoint pos)
     menu->addAction(tr("Open"), this, &FolderTab::slotOpenItem);
     if (info.isDir())
     {
-        // TODO: Open in new tab.
+        menu->addAction(tr("Open in new tab"), this, &FolderTab::slotOpenInNewTab);
     }
     else
     {
@@ -328,4 +328,11 @@ void qfcmd::FolderTab::slotOpenFileWith()
 #else
     // TODO: Implement on Linux.
 #endif
+}
+
+void qfcmd::FolderTab::slotOpenInNewTab()
+{
+    QModelIndex index = m_inner->tableView->currentIndex();
+    QString path = m_inner->model->filePath(index);
+    emit signalOpenInNewTab(path);
 }

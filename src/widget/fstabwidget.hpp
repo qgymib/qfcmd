@@ -13,12 +13,12 @@ public:
     FsTabWidget(QWidget* parent = nullptr);
     virtual ~FsTabWidget();
 
-public:
+public slots:
     /**
      * @brief Add new tab with given path.
      * @param[in] path - path to folder.
      */
-    void addTab(const QString& path);
+    void slotOpenNewTab(const QString& path);
 
 private slots:
     void slotUpdateTabTitle(const QString& title);

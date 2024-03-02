@@ -25,6 +25,8 @@ private slots:
     void onGoBackClicked();
     void onGoForwardClicked();
     void onGoUpClicked();
+    void onTableViewContextMenuRequested(QPoint pos);
+    void slotShowProperties();
 
 private:
     /**

@@ -7,6 +7,10 @@
 #include <QSettings>
 #include <QStandardPaths>
 
+#if defined(_WIN32)
+#include <windows.h>
+#endif
+
 static void _setup_i18n(QApplication& a)
 {
     QTranslator translator;
@@ -64,6 +68,10 @@ static void _setup_app(QApplication& a)
 
 int main(int argc, char *argv[])
 {
+#if defined(_WIN32)
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+#endif
+
     QApplication a(argc, argv);
     _setup_i18n(a);
     _setup_app(a);

@@ -1,8 +1,52 @@
 #include <QCommonStyle>
 #include <QDesktopServices>
+#include <QTableWidgetItem>
+#include <QMenu>
+
+#if defined(_WIN32)
+#include "utils/win32.hpp"
+#else
+#include <QDBusInterface>
+#include <QDBusMessage>
+#include <QProcess>
+#endif
 
 #include "foldertab.hpp"
 #include "ui_foldertab.h"
+
+#if defined(_WIN32)
+static void _show_file_properties(const QString& path)
+{
+    qfcmd::wchar w_path = qfcmd::Win32::StringToWide(path);
+
+    SHELLEXECUTEINFOW aShExecInfo;
+    ZeroMemory(&aShExecInfo, sizeof(SHELLEXECUTEINFOW));
+    aShExecInfo.cbSize = sizeof(aShExecInfo);
+    aShExecInfo.fMask = SEE_MASK_INVOKEIDLIST;
+    aShExecInfo.lpVerb = L"properties";
+	aShExecInfo.lpFile = w_path.data();
+	ShellExecuteExW(&aShExecInfo);
+}
+#else
+static void _show_file_properties(const QString& path)
+{
+	QDBusInterface iface("org.freedesktop.FileManager1",
+		"/org/freedesktop/FileManager1",
+		"org.freedesktop.FileManager1",
+		QDBusConnection::sessionBus());
+
+	if (!iface.isValid())
+	{
+		return;
+	}
+
+	QDBusMessage rsp = iface.call("ShowItemProperties", QStringList() << QUrl::fromLocalFile(path).toString());
+	if (rsp.type() == QDBusMessage::ErrorMessage)
+	{
+		qWarning() << "Error: " << rsp.errorMessage();
+	}
+}
+#endif
 
 FolderTab::FolderTab(QWidget *parent)
     : FolderTab(QDir::currentPath(), parent)
@@ -33,6 +77,7 @@ FolderTab::FolderTab(const QString& path, QWidget *parent)
     connect(ui->goForward, &QPushButton::clicked, this, &FolderTab::onGoForwardClicked);
     connect(ui->goUp, &QPushButton::clicked, this, &FolderTab::onGoUpClicked);
     connect(ui->tableView, &QTableView::doubleClicked, this, &FolderTab::onTableViewDoubleClicked);
+    connect(ui->tableView, &QTableView::customContextMenuRequested, this, &FolderTab::onTableViewContextMenuRequested);
 }
 
 FolderTab::~FolderTab()
@@ -121,4 +166,18 @@ void FolderTab::cd_with_history(const QString& path)
     m_path_idx = m_path_history.size() - 1;
 
     cd(path);
+}
+
+void FolderTab::onTableViewContextMenuRequested(QPoint pos)
+{
+    QMenu* menu = new QMenu(this);
+    menu->addAction(tr("Properties"), this, &FolderTab::slotShowProperties);
+	menu->exec(ui->tableView->viewport()->mapToGlobal(pos));
+}
+
+void FolderTab::slotShowProperties()
+{
+    QModelIndex index = ui->tableView->currentIndex();
+    const QString path = m_model->filePath(index);
+    _show_file_properties(path);
 }

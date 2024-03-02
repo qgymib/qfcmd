@@ -46,6 +46,9 @@ set(PROJECT_SOURCES
         # Model
         src/model/keyboardshortcuts.hpp
         src/model/keyboardshortcuts.cpp
+        # View
+        src/view/fstreeview.hpp
+        src/view/fstreeview.cpp
         # Utils
         src/utils/win32.hpp
         src/utils/win32.cpp

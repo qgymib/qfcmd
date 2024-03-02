@@ -17,7 +17,7 @@
    <property name="orientation">
     <enum>Qt::Horizontal</enum>
    </property>
-   <widget class="QTreeView" name="treeView"/>
+   <widget class="qfcmd::FsTreeView" name="treeView"/>
    <widget class="QSplitter" name="pannel">
     <property name="orientation">
      <enum>Qt::Horizontal</enum>
@@ -102,6 +102,11 @@
    <extends>QTabWidget</extends>
    <header>fcmdtabwidget.hpp</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>qfcmd::FsTreeView</class>
+   <extends>QTreeView</extends>
+   <header>view/fstreeview.hpp</header>
   </customwidget>
  </customwidgets>
  <resources/>

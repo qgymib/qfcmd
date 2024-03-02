@@ -1,4 +1,4 @@
-#include <QFileSystemModel>
+
 
 #include "mainwindow.hpp"
 #include "ui_mainwindow.h"
@@ -16,11 +16,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->centralwidget->setStretchFactor(1, 1);
     setupActions();
 
-    {
-        QFileSystemModel* model = new QFileSystemModel;
-        model->setRootPath(QDir::currentPath());
-        ui->treeView->setModel(model);
-    }
+	{
+		ui->treeView->slotChangeDirectory(QDir::currentPath());
+	}
 
     {
         bool visible = settings.value("view/ShowToolbar", true).toBool();

@@ -50,6 +50,7 @@ int KeyboardShortcuts::columnCount(const QModelIndex &parent) const
 
 QVariant KeyboardShortcuts::data(const QModelIndex &index, int role) const
 {
+    (void)role;
     if (!index.isValid())
         return QVariant();
 

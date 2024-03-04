@@ -26,6 +26,8 @@ static void _setup_i18n(QApplication& a)
 
 static void _setup_app(QApplication& a)
 {
+    (void)a;
+
     const QString organization_domain = "com.github.qgymib.qfcmd";
     QApplication::setOrganizationName(organization_domain);
     QApplication::setOrganizationDomain(organization_domain);

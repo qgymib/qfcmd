@@ -38,8 +38,8 @@ struct FolderTabInner
     QTableView*         tableView;
 
     QFileSystemModel*   model;                  /* File system model. */
-    size_t              cfg_path_max_history;   /* Max number of path history.*/
-    size_t              path_idx;               /* Current path. */
+    qsizetype           cfg_path_max_history;   /* Max number of path history.*/
+    qsizetype           path_idx;               /* Current path. */
     QStringList         path_history;           /* Path history. */
 };
 } /* namespace qfcmd */

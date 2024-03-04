@@ -95,6 +95,11 @@ target_link_libraries(qfcmd
         Qt${QT_VERSION_MAJOR}::Widgets
         Qt${QT_VERSION_MAJOR}::DBus
 )
+if (CMAKE_C_COMPILER_ID STREQUAL "MSVC")
+    target_compile_options(qfcmd PRIVATE /W4 /WX)
+else ()
+    target_compile_options(qfcmd PRIVATE -Wall -Wextra -Werror)
+endif ()
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an

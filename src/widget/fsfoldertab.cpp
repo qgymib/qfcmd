@@ -8,7 +8,7 @@
 #include <QHeaderView>
 #include <QPlainTextEdit>
 #include <QPushButton>
-#include <QTableView>
+#include <QTreeView>
 #include <QVBoxLayout>
 #include <QWidget>
 #include <QFileSystemModel>
@@ -27,6 +27,9 @@
 namespace qfcmd {
 struct FolderTabInner
 {
+    FolderTabInner(FolderTab* parent);
+    ~FolderTabInner();
+
     FolderTab*          parent;
 
     QVBoxLayout*        verticalLayout;
@@ -35,7 +38,7 @@ struct FolderTabInner
     QPushButton*        goForward;
     QPushButton*        goUp;
     QPlainTextEdit*     url;
-    QTableView*         tableView;
+    QTreeView*          treeView;
 
     QFileSystemModel*   model;                  /* File system model. */
     qsizetype           cfg_path_max_history;   /* Max number of path history.*/
@@ -43,6 +46,69 @@ struct FolderTabInner
     QStringList         path_history;           /* Path history. */
 };
 } /* namespace qfcmd */
+
+qfcmd::FolderTabInner::FolderTabInner(FolderTab *parent)
+{
+    this->parent = parent;
+
+    verticalLayout = new QVBoxLayout(parent);
+    horizontalLayout = new QHBoxLayout();
+    goBack = new QPushButton(parent);
+    QSizePolicy sizePolicy(QSizePolicy::Policy::Fixed, QSizePolicy::Policy::Fixed);
+    sizePolicy.setHorizontalStretch(0);
+    sizePolicy.setVerticalStretch(0);
+    sizePolicy.setHeightForWidth(goBack->sizePolicy().hasHeightForWidth());
+    goBack->setSizePolicy(sizePolicy);
+    goBack->setMaximumSize(QSize(32, 32));
+    goBack->setFlat(true);
+
+    horizontalLayout->addWidget(goBack);
+
+    goForward = new QPushButton(parent);
+    sizePolicy.setHeightForWidth(goForward->sizePolicy().hasHeightForWidth());
+    goForward->setSizePolicy(sizePolicy);
+    goForward->setMaximumSize(QSize(32, 32));
+    goForward->setFlat(true);
+
+    horizontalLayout->addWidget(goForward);
+
+    goUp = new QPushButton(parent);
+    sizePolicy.setHeightForWidth(goUp->sizePolicy().hasHeightForWidth());
+    goUp->setSizePolicy(sizePolicy);
+    goUp->setMaximumSize(QSize(32, 32));
+    goUp->setFlat(true);
+
+    horizontalLayout->addWidget(goUp);
+
+    url = new QPlainTextEdit(parent);
+    QSizePolicy sizePolicy1(QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Fixed);
+    sizePolicy1.setHorizontalStretch(0);
+    sizePolicy1.setVerticalStretch(0);
+    sizePolicy1.setHeightForWidth(url->sizePolicy().hasHeightForWidth());
+    url->setSizePolicy(sizePolicy1);
+    url->setMaximumSize(QSize(16777215, 32));
+    url->setInputMethodHints(Qt::ImhNoAutoUppercase);
+    url->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    url->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    url->setLineWrapMode(QPlainTextEdit::NoWrap);
+
+    horizontalLayout->addWidget(url);
+
+    verticalLayout->addLayout(horizontalLayout);
+
+    treeView = new QTreeView(parent);
+    treeView->setContextMenuPolicy(Qt::CustomContextMenu);
+    treeView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    treeView->setWordWrap(false);
+
+    verticalLayout->addWidget(treeView);
+
+    QMetaObject::connectSlotsByName(parent);
+}
+
+qfcmd::FolderTabInner::~FolderTabInner()
+{
+}
 
 #if defined(_WIN32)
 static void _show_file_properties(const QString& path)
@@ -78,68 +144,6 @@ static void _show_file_properties(const QString& path)
 }
 #endif
 
-static void _folder_tabl_setup_inner(qfcmd::FolderTab* parent, qfcmd::FolderTabInner* ui)
-{
-    ui->parent = parent;
-
-    parent->setWindowTitle(QString::fromUtf8("Form"));
-    ui->verticalLayout = new QVBoxLayout(parent);
-    ui->horizontalLayout = new QHBoxLayout();
-    ui->goBack = new QPushButton(parent);
-    QSizePolicy sizePolicy(QSizePolicy::Policy::Fixed, QSizePolicy::Policy::Fixed);
-    sizePolicy.setHorizontalStretch(0);
-    sizePolicy.setVerticalStretch(0);
-    sizePolicy.setHeightForWidth(ui->goBack->sizePolicy().hasHeightForWidth());
-    ui->goBack->setSizePolicy(sizePolicy);
-    ui->goBack->setMaximumSize(QSize(32, 32));
-    ui->goBack->setFlat(true);
-
-    ui->horizontalLayout->addWidget(ui->goBack);
-
-    ui->goForward = new QPushButton(parent);
-    sizePolicy.setHeightForWidth(ui->goForward->sizePolicy().hasHeightForWidth());
-    ui->goForward->setSizePolicy(sizePolicy);
-    ui->goForward->setMaximumSize(QSize(32, 32));
-    ui->goForward->setFlat(true);
-
-    ui->horizontalLayout->addWidget(ui->goForward);
-
-    ui->goUp = new QPushButton(parent);
-    sizePolicy.setHeightForWidth(ui->goUp->sizePolicy().hasHeightForWidth());
-    ui->goUp->setSizePolicy(sizePolicy);
-    ui->goUp->setMaximumSize(QSize(32, 32));
-    ui->goUp->setFlat(true);
-
-    ui->horizontalLayout->addWidget(ui->goUp);
-
-    ui->url = new QPlainTextEdit(parent);
-    QSizePolicy sizePolicy1(QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Fixed);
-    sizePolicy1.setHorizontalStretch(0);
-    sizePolicy1.setVerticalStretch(0);
-    sizePolicy1.setHeightForWidth(ui->url->sizePolicy().hasHeightForWidth());
-    ui->url->setSizePolicy(sizePolicy1);
-    ui->url->setMaximumSize(QSize(16777215, 32));
-    ui->url->setInputMethodHints(Qt::ImhNoAutoUppercase);
-    ui->url->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    ui->url->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    ui->url->setLineWrapMode(QPlainTextEdit::NoWrap);
-
-    ui->horizontalLayout->addWidget(ui->url);
-
-    ui->verticalLayout->addLayout(ui->horizontalLayout);
-
-    ui->tableView = new QTableView(parent);
-    ui->tableView->setContextMenuPolicy(Qt::CustomContextMenu);
-    ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
-    ui->tableView->setShowGrid(false);
-    ui->tableView->setWordWrap(false);
-    ui->tableView->verticalHeader()->setVisible(false);
-
-    ui->verticalLayout->addWidget(ui->tableView);
-
-    QMetaObject::connectSlotsByName(parent);
-}
-
 static void _update_ui_visibility(qfcmd::FolderTabInner* inner)
 {
     inner->goBack->setEnabled(inner->path_idx > 0);
@@ -156,7 +160,7 @@ static void _update_ui_visibility(qfcmd::FolderTabInner* inner)
 static void _folder_tab_cd(qfcmd::FolderTabInner* inner, const QString& path)
 {
     inner->url->setPlainText(path);
-    inner->tableView->setRootIndex(inner->model->setRootPath(path));
+    inner->treeView->setRootIndex(inner->model->setRootPath(path));
 
     QDir dir(path);
     inner->parent->setWindowTitle(dir.dirName());
@@ -197,10 +201,8 @@ qfcmd::FolderTab::FolderTab(QWidget *parent)
 }
 
 qfcmd::FolderTab::FolderTab(const QString& path, QWidget *parent)
-    : QWidget(parent), m_inner(new qfcmd::FolderTabInner)
+    : QWidget(parent), m_inner(new qfcmd::FolderTabInner(this))
 {
-    _folder_tabl_setup_inner(this, m_inner);
-
     {
         QCommonStyle style;
         m_inner->goBack->setIcon(style.standardIcon(QStyle::SP_ArrowBack));
@@ -210,7 +212,7 @@ qfcmd::FolderTab::FolderTab(const QString& path, QWidget *parent)
 
     {
         m_inner->model = new QFileSystemModel;
-        m_inner->tableView->setModel(m_inner->model);
+        m_inner->treeView->setModel(m_inner->model);
 
         m_inner->cfg_path_max_history = 1024;
         _folder_tab_cd_with_history(m_inner, path);
@@ -219,8 +221,8 @@ qfcmd::FolderTab::FolderTab(const QString& path, QWidget *parent)
     connect(m_inner->goBack, &QPushButton::clicked, this, &FolderTab::onGoBackClicked);
     connect(m_inner->goForward, &QPushButton::clicked, this, &FolderTab::onGoForwardClicked);
     connect(m_inner->goUp, &QPushButton::clicked, this, &FolderTab::onGoUpClicked);
-    connect(m_inner->tableView, &QTableView::doubleClicked, this, &FolderTab::slotOpenItem);
-    connect(m_inner->tableView, &QTableView::customContextMenuRequested, this, &FolderTab::slotTableViewContextMenuRequested);
+    connect(m_inner->treeView, &QTableView::doubleClicked, this, &FolderTab::slotOpenItem);
+    connect(m_inner->treeView, &QTableView::customContextMenuRequested, this, &FolderTab::slotTableViewContextMenuRequested);
 }
 
 qfcmd::FolderTab::~FolderTab()
@@ -262,7 +264,7 @@ void qfcmd::FolderTab::onGoUpClicked()
 
 void qfcmd::FolderTab::slotOpenItem()
 {
-    QModelIndex index = m_inner->tableView->currentIndex();
+    QModelIndex index = m_inner->treeView->currentIndex();
     const QString path = m_inner->model->filePath(index);
 
     if (m_inner->model->isDir(index))
@@ -277,7 +279,7 @@ void qfcmd::FolderTab::slotOpenItem()
 
 void qfcmd::FolderTab::slotTableViewContextMenuRequested(QPoint pos)
 {
-    const QModelIndex idx = m_inner->tableView->indexAt(pos);
+    const QModelIndex idx = m_inner->treeView->indexAt(pos);
     const QFileInfo info = m_inner->model->fileInfo(idx);
     QMenu* menu = new QMenu(this);
     menu->addAction(tr("Open"), this, &FolderTab::slotOpenItem);
@@ -291,19 +293,19 @@ void qfcmd::FolderTab::slotTableViewContextMenuRequested(QPoint pos)
     }
 
     menu->addAction(tr("Properties"), this, &FolderTab::slotShowProperties);
-    menu->exec(m_inner->tableView->viewport()->mapToGlobal(pos));
+    menu->exec(m_inner->treeView->viewport()->mapToGlobal(pos));
 }
 
 void qfcmd::FolderTab::slotShowProperties()
 {
-    QModelIndex index = m_inner->tableView->currentIndex();
+    QModelIndex index = m_inner->treeView->currentIndex();
     const QString path = m_inner->model->filePath(index);
     _show_file_properties(path);
 }
 
 void qfcmd::FolderTab::slotOpenFileWith()
 {
-    QModelIndex index = m_inner->tableView->currentIndex();
+    QModelIndex index = m_inner->treeView->currentIndex();
     QString path = m_inner->model->filePath(index);
     path = QDir::toNativeSeparators(path);
 
@@ -316,7 +318,7 @@ void qfcmd::FolderTab::slotOpenFileWith()
 
 void qfcmd::FolderTab::slotOpenInNewTab()
 {
-    QModelIndex index = m_inner->tableView->currentIndex();
+    QModelIndex index = m_inner->treeView->currentIndex();
     QString path = m_inner->model->filePath(index);
     emit signalOpenInNewTab(path);
 }

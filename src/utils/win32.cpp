@@ -32,6 +32,7 @@ qfcmd::wchar qfcmd::wchar::fromQString(const QString& str)
 {
     qfcmd::wchar w_ret;
 
+#if 0 /* This is the standard way, but has two steps conversion. */
     QByteArray arr = str.toUtf8();
     const char* c_str = arr.data();
 
@@ -41,6 +42,21 @@ qfcmd::wchar qfcmd::wchar::fromQString(const QString& str)
     w_ret.m_str = (WCHAR*)::malloc(buf_sz);
     int ret = ::MultiByteToWideChar(CP_UTF8, 0, c_str, -1, w_ret.m_str, w_ret.m_size);
     assert(ret == w_ret.m_size);
+#else /* We take the fast way. */
+
+    const ushort* buf = str.utf16();
+    qsizetype bufsz = str.size();
+
+    /* Check type size to ensure this approach works. */
+    static_assert(sizeof(*buf) == sizeof(*w_ret.m_str),
+                  "sizeof(ushort) != sizeof(wchar_t)");
+
+    w_ret.m_size = bufsz + 1;
+    size_t buf_sz = w_ret.m_size * sizeof(WCHAR);
+
+    w_ret.m_str = (wchar_t*)::malloc(buf_sz);
+    memcpy(w_ret.m_str, buf, buf_sz);
+#endif
 
     return w_ret;
 }

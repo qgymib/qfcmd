@@ -1,5 +1,4 @@
 #include <QCommonStyle>
-#include <QDesktopServices>
 #include <QTableWidgetItem>
 #include <QMenu>
 #include <QVariant>
@@ -12,6 +11,7 @@
 #include <QVBoxLayout>
 #include <QWidget>
 #include <QFileSystemModel>
+#include <QDesktopServices>
 
 #if defined(_WIN32)
 #include <QProcess>
@@ -273,7 +273,8 @@ void qfcmd::FolderTab::slotOpenItem()
     }
     else
     {/* Open file. */
-        QDesktopServices::openUrl(QUrl(path));
+        QUrl url = QUrl::fromLocalFile(path);
+        QDesktopServices::openUrl(url);
     }
 }
 

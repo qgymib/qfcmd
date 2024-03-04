@@ -1,5 +1,3 @@
-#include "widget/mainwindow.hpp"
-
 #include <QApplication>
 #include <QLocale>
 #include <QTranslator>
@@ -10,6 +8,8 @@
 #if defined(_WIN32)
 #include <windows.h>
 #endif
+
+#include "widget/mainwindow.hpp"
 
 static void _setup_i18n(QApplication& a)
 {
@@ -68,8 +68,21 @@ static void _setup_app(QApplication& a)
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, QApplication::applicationDirPath());
 }
 
+/**
+ * @brief Global exit hook.
+ */
+static void _at_exit()
+{
+}
+
 int main(int argc, char *argv[])
 {
+    /*
+     * Register as soon as possible.
+     * @see https://en.cppreference.com/w/cpp/utility/program/atexit
+     */
+    std::atexit(_at_exit);
+
 #if defined(_WIN32)
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 #endif

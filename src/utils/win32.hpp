@@ -38,8 +38,8 @@ private:
     wchar();
 
 private:
-    wchar_t*    m_str;
-    int         m_size;
+    wchar_t*    m_str;  /**< The wchar_t string. */
+    int         m_size; /**< The size of wchar_t string, including the terminating null. */
 };
 
 } /* namespace qfcmd */

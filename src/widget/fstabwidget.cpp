@@ -1,11 +1,13 @@
 #include <QDir>
 
 #include "fstabwidget.hpp"
+#include "fstabbar.hpp"
 #include "fsfoldertab.hpp"
 
 qfcmd::FsTabWidget::FsTabWidget(QWidget* parent)
     : QTabWidget(parent)
 {
+    setTabBar(new qfcmd::FsTabBar(this));
     connect(this, &QTabWidget::tabCloseRequested, this, &FsTabWidget::slotTabCloseRequest);
 
     slotOpenNewTab(QDir::homePath());

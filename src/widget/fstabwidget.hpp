@@ -23,6 +23,7 @@ public slots:
 private slots:
     void slotUpdateTabTitle(const QString& title);
     void slotTabCloseRequest(int index);
+    void slotTabBarChangeTab(int index);
 };
 
 } /* namespace qfcmd */

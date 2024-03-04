@@ -2,15 +2,10 @@
 #define MAINWINDOW_HPP
 
 #include <QMainWindow>
-#include <QSettings>
 
-#include "fcmdshortcutmanager.hpp"
+namespace qfcmd {
 
-QT_BEGIN_NAMESPACE
-namespace Ui {
-class MainWindow;
-}
-QT_END_NAMESPACE
+struct MainWindowInner;
 
 class MainWindow : public QMainWindow
 {
@@ -20,17 +15,15 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-private:
-    void setupActions();
-
-private slots:
+public slots:
     void actionAboutDialog();
     void actionShowToolbarChange();
     void actionPerferences();
 
 private:
-    Ui::MainWindow*     ui;
-    QSettings           settings;
-    FcmdShortCutManager m_shortcut_mgr;
+    MainWindowInner*    m_inner;
 };
+
+} /* namespace qfcmd */
+
 #endif // MAINWINDOW_H

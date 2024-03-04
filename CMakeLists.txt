@@ -17,10 +17,6 @@ set(TS_FILES lang/qfcmd_zh_CN.ts)
 set(PROJECT_SOURCES
         # Entrypoint
         src/main.cpp
-        # MainWindow
-        src/mainwindow.cpp
-        src/mainwindow.hpp
-        src/mainwindow.ui
         # PerferencesDialog
         src/perferencesdialog.hpp
         src/perferencesdialog.cpp
@@ -29,7 +25,9 @@ set(PROJECT_SOURCES
         src/keyboardshortcutsform.hpp
         src/keyboardshortcutsform.cpp
         src/keyboardshortcutsform.ui
-        # FolderTab
+        # Widgets
+        src/widget/mainwindow.cpp
+        src/widget/mainwindow.hpp
         src/widget/fsfoldertab.hpp
         src/widget/fsfoldertab.cpp
         src/widget/fstabwidget.hpp
@@ -49,6 +47,9 @@ set(PROJECT_SOURCES
         # Utils
         src/utils/win32.hpp
         src/utils/win32.cpp
+        # Resources
+        res/app.qrc
+        res/app.rc
         # i18n
         ${TS_FILES}
 )

@@ -82,52 +82,37 @@ static void _folder_tabl_setup_inner(qfcmd::FolderTab* parent, qfcmd::FolderTabI
 {
     ui->parent = parent;
 
-    if (parent->objectName().isEmpty())
-    {
-        parent->setObjectName("FolderTab");
-    }
-
-    parent->resize(400, 300);
     parent->setWindowTitle(QString::fromUtf8("Form"));
     ui->verticalLayout = new QVBoxLayout(parent);
-    ui->verticalLayout->setObjectName("verticalLayout");
     ui->horizontalLayout = new QHBoxLayout();
-    ui->horizontalLayout->setObjectName("horizontalLayout");
     ui->goBack = new QPushButton(parent);
-    ui->goBack->setObjectName("goBack");
     QSizePolicy sizePolicy(QSizePolicy::Policy::Fixed, QSizePolicy::Policy::Fixed);
     sizePolicy.setHorizontalStretch(0);
     sizePolicy.setVerticalStretch(0);
     sizePolicy.setHeightForWidth(ui->goBack->sizePolicy().hasHeightForWidth());
     ui->goBack->setSizePolicy(sizePolicy);
     ui->goBack->setMaximumSize(QSize(32, 32));
-    ui->goBack->setText(QString::fromUtf8(""));
     ui->goBack->setFlat(true);
 
     ui->horizontalLayout->addWidget(ui->goBack);
 
     ui->goForward = new QPushButton(parent);
-    ui->goForward->setObjectName("goForward");
     sizePolicy.setHeightForWidth(ui->goForward->sizePolicy().hasHeightForWidth());
     ui->goForward->setSizePolicy(sizePolicy);
     ui->goForward->setMaximumSize(QSize(32, 32));
-    ui->goForward->setText(QString::fromUtf8(""));
     ui->goForward->setFlat(true);
 
     ui->horizontalLayout->addWidget(ui->goForward);
 
     ui->goUp = new QPushButton(parent);
-    ui->goUp->setObjectName("goUp");
     sizePolicy.setHeightForWidth(ui->goUp->sizePolicy().hasHeightForWidth());
     ui->goUp->setSizePolicy(sizePolicy);
     ui->goUp->setMaximumSize(QSize(32, 32));
-    ui->goUp->setText(QString::fromUtf8(""));
     ui->goUp->setFlat(true);
 
     ui->horizontalLayout->addWidget(ui->goUp);
 
     ui->url = new QPlainTextEdit(parent);
-    ui->url->setObjectName("url");
     QSizePolicy sizePolicy1(QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Fixed);
     sizePolicy1.setHorizontalStretch(0);
     sizePolicy1.setVerticalStretch(0);
@@ -144,7 +129,6 @@ static void _folder_tabl_setup_inner(qfcmd::FolderTab* parent, qfcmd::FolderTabI
     ui->verticalLayout->addLayout(ui->horizontalLayout);
 
     ui->tableView = new QTableView(parent);
-    ui->tableView->setObjectName("tableView");
     ui->tableView->setContextMenuPolicy(Qt::CustomContextMenu);
     ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tableView->setShowGrid(false);

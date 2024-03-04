@@ -44,7 +44,7 @@ void qfcmd::FsTabWidget::slotOpenNewTab(const QString& path)
 
     int idx = QTabWidget::addTab(tab, tab->windowTitle());
     connect(tab, &QWidget::windowTitleChanged, this, &FsTabWidget::slotUpdateTabTitle);
-    connect(tab, qfcmd::FolderTab::signalOpenInNewTab, this, &FsTabWidget::slotOpenNewTab);
+    connect(tab, &qfcmd::FolderTab::signalOpenInNewTab, this, &FsTabWidget::slotOpenNewTab);
     setCurrentIndex(idx);
 
     setTabsClosable(count() > 1);

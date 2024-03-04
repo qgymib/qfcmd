@@ -1,4 +1,4 @@
-#include "mainwindow.hpp"
+#include "widget/mainwindow.hpp"
 
 #include <QApplication>
 #include <QLocale>
@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
     _setup_i18n(a);
     _setup_app(a);
 
-    MainWindow w;
+    qfcmd::MainWindow w;
     w.show();
 
     return a.exec();

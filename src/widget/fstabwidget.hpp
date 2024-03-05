@@ -68,6 +68,11 @@ private slots:
      */
     void slotContextMenuRequest(const QPoint& pos);
 
+    /**
+     * @brief Triggered when user choose duplicate from menu.
+     */
+    void slotDuplicateSelectedTab();
+
 private:
     FsTabWidgetInner* m_inner;
 };

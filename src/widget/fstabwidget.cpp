@@ -147,12 +147,19 @@ void qfcmd::FsTabWidget::slotContextMenuRequest(const QPoint &pos)
     {
         return;
     }
+    qfcmd::FolderTab* tab = qobject_cast<qfcmd::FolderTab*>(widget(idx));
 
     QMenu* menu = new QMenu(this);
+    if (tab != nullptr)
+    {
+        QAction* act = menu->addAction(tr("Duplicate tab"), this, &FsTabWidget::slotDuplicateSelectedTab);
+        act->setShortcut(qfcmd::Settings::get<QKeySequence>(qfcmd::Settings::DUPLICATE_TAB));
+        act->setData(tab->path());
+    }
 
     if (count() > 1)
     {
-        QAction* act = menu->addAction("Close", this, &FsTabWidget::slotTabCloseAction);
+        QAction* act = menu->addAction(tr("Close"), this, &FsTabWidget::slotTabCloseAction);
         act->setShortcut(qfcmd::Settings::get<QKeySequence>(qfcmd::Settings::CLOSE_TAB));
         act->setData(idx);
     }
@@ -160,9 +167,16 @@ void qfcmd::FsTabWidget::slotContextMenuRequest(const QPoint &pos)
     menu->exec(tabBar()->mapToGlobal(pos));
 }
 
+void qfcmd::FsTabWidget::slotDuplicateSelectedTab()
+{
+    QAction* act = qobject_cast<QAction *>(sender());
+    QString path = act->data().toString();
+    slotOpenNewTab(path);
+}
+
 void qfcmd::FsTabWidget::slotTabCloseAction()
 {
-    QAction *act = qobject_cast<QAction *>(sender());
+    QAction* act = qobject_cast<QAction *>(sender());
     int idx = act->data().toInt();
     slotTabCloseRequest(idx);
 }

@@ -230,6 +230,11 @@ qfcmd::FolderTab::~FolderTab()
     delete m_inner;
 }
 
+QString qfcmd::FolderTab::path() const
+{
+    return m_inner->path_history[m_inner->path_idx];
+}
+
 void qfcmd::FolderTab::onGoBackClicked()
 {
     if (m_inner->path_idx > 0)

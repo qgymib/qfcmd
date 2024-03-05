@@ -16,6 +16,9 @@ public:
     explicit FolderTab(const QString& path, QWidget *parent = nullptr);
     ~FolderTab();
 
+public:
+    QString path() const;
+
 signals:
     /**
      * @brief Open focus file in new tab.

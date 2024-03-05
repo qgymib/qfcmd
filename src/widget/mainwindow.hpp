@@ -21,10 +21,22 @@ public slots:
     void actionPerferences();
 
     /**
-     * @brief Close current tab.
-     * @see qfcmd::Settings::CLOSE_CURRENT_TAB
+     * @brief Close tab.
+     *
+     * This slot is triggered by shortcut.
+     *
+     * @see qfcmd::Settings::CLOSE_TAB
      */
-    void slotCloseCurrentTab();
+    void slotShortcutCloseTab();
+
+    /**
+     * @brief Duplicate tab.
+     *
+     * This slot is triggered by shortcut.
+     *
+     * @see qfcmd::Settings::DUPLICATE_TAB
+     */
+    void slotShortcutDuplicateTab();
 
 private:
     MainWindowInner*    m_inner;

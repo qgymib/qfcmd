@@ -23,10 +23,17 @@ qfcmd::FsTabWidget::~FsTabWidget()
 {
 }
 
-void qfcmd::FsTabWidget::closeCurrentActiveTab()
+void qfcmd::FsTabWidget::closeCurrentActivateTab()
 {
     int idx = currentIndex();
     slotTabCloseRequest(idx);
+}
+
+void qfcmd::FsTabWidget::duplicateCurrentActivateTab()
+{
+    qfcmd::FolderTab* tab = qobject_cast<qfcmd::FolderTab*>(currentWidget());
+    const QString path = tab->path();
+    slotOpenNewTab(path);
 }
 
 void qfcmd::FsTabWidget::mousePressEvent(QMouseEvent *event)
@@ -96,7 +103,7 @@ void qfcmd::FsTabWidget::slotContextMenuRequest(const QPoint &pos)
     if (count() > 1)
     {
         QAction* act = menu->addAction("Close", this, &FsTabWidget::slotTabCloseAction);
-        act->setShortcut(qfcmd::Settings::get<QKeySequence>(qfcmd::Settings::CLOSE_CURRENT_TAB));
+        act->setShortcut(qfcmd::Settings::get<QKeySequence>(qfcmd::Settings::CLOSE_TAB));
         act->setData(idx);
     }
 

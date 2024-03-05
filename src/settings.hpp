@@ -13,7 +13,8 @@
  * + The default value of the setting.
  */
 #define QFCMD_SETTINGS_TABLE(xx)  \
-    xx(CLOSE_CURRENT_TAB, "Shortcuts/CloseCurrentTab", QKeySequence(Qt::CTRL | Qt::Key_W))
+    xx(CLOSE_TAB,       "Shortcuts/CloseTab",       QKeySequence(Qt::CTRL | Qt::Key_W))  \
+    xx(DUPLICATE_TAB,   "Shortcuts/DuplicateTab",   QKeySequence(Qt::CTRL | Qt::Key_T))
 
 namespace qfcmd {
 

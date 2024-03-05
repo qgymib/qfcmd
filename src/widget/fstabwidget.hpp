@@ -14,7 +14,8 @@ public:
     virtual ~FsTabWidget();
 
 public:
-    void closeCurrentActiveTab();
+    void closeCurrentActivateTab();
+    void duplicateCurrentActivateTab();
 
 protected:
     /**

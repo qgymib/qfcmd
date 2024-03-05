@@ -44,12 +44,49 @@ struct MainWindowInner
     QStatusBar*             statusbar;
     QToolBar*               toolBar;
 
-    QShortcut*              shortcutCloseCurrentTab;
+    QShortcut*              scCloseTab;
+    QShortcut*              scDuplicateTab;
 
     QSettings*              settings;
     FcmdShortCutManager*    shortcut_mgr;
 };
 } /* namespace qfcmd */
+
+static void _mainwindow_setupActions(qfcmd::MainWindowInner* inner)
+{
+	/* Register all known actions. */
+	inner->shortcut_mgr->regAction(inner->actionPerferences, inner->parent, &qfcmd::MainWindow::actionPerferences);
+	inner->shortcut_mgr->regAction(inner->actionShowToolbar, inner->parent, &qfcmd::MainWindow::actionShowToolbarChange);
+	inner->shortcut_mgr->regAction(inner->actionAbout, inner->parent, &qfcmd::MainWindow::actionAboutDialog);
+}
+
+/**
+ * @brief Get the current activated panel.
+ */
+static qfcmd::FsTabWidget* _get_activate_panel(qfcmd::MainWindowInner* inner)
+{
+    QWidget* w = QApplication::focusWidget();
+    while (w != nullptr)
+    {
+        if (w == inner->leftPanel)
+        {
+            break;
+        }
+        else if (w == inner->rightPanel)
+        {
+            break;
+        }
+
+        w = qobject_cast<QWidget*>(w->parent());
+    }
+
+    if (w == nullptr)
+    {
+        return nullptr;
+    }
+
+    return qobject_cast<qfcmd::FsTabWidget*>(w);
+}
 
 qfcmd::MainWindowInner::MainWindowInner(MainWindow* parent)
 {
@@ -104,8 +141,10 @@ qfcmd::MainWindowInner::MainWindowInner(MainWindow* parent)
 
     parent->resize(1366, 768);
 
-    shortcutCloseCurrentTab = new QShortcut(qfcmd::Settings::get<QKeySequence>(qfcmd::Settings::CLOSE_CURRENT_TAB),
-                                            parent);
+    scCloseTab = new QShortcut(qfcmd::Settings::get<QKeySequence>(qfcmd::Settings::CLOSE_TAB),
+                               parent);
+    scDuplicateTab = new QShortcut(qfcmd::Settings::get<QKeySequence>(qfcmd::Settings::DUPLICATE_TAB),
+                                   parent);
 
     settings = new QSettings;
     shortcut_mgr = new FcmdShortCutManager(parent);
@@ -117,14 +156,6 @@ qfcmd::MainWindowInner::~MainWindowInner()
     delete shortcut_mgr;
 }
 
-static void _mainwindow_setupActions(qfcmd::MainWindowInner* inner)
-{
-	/* Register all known actions. */
-	inner->shortcut_mgr->regAction(inner->actionPerferences, inner->parent, &qfcmd::MainWindow::actionPerferences);
-	inner->shortcut_mgr->regAction(inner->actionShowToolbar, inner->parent, &qfcmd::MainWindow::actionShowToolbarChange);
-	inner->shortcut_mgr->regAction(inner->actionAbout, inner->parent, &qfcmd::MainWindow::actionAboutDialog);
-}
-
 qfcmd::MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , m_inner(new MainWindowInner(this))
@@ -132,7 +163,8 @@ qfcmd::MainWindow::MainWindow(QWidget *parent)
     _mainwindow_setupActions(m_inner);
     setWindowIcon(QIcon(":/app.ico"));
 
-    connect(m_inner->shortcutCloseCurrentTab, &QShortcut::activated, this, &MainWindow::slotCloseCurrentTab);
+    connect(m_inner->scCloseTab, &QShortcut::activated, this, &MainWindow::slotShortcutCloseTab);
+    connect(m_inner->scDuplicateTab, &QShortcut::activated, this, &MainWindow::slotShortcutDuplicateTab);
 
     {
         m_inner->treeView->slotChangeDirectory(QDir::currentPath());
@@ -175,28 +207,22 @@ void qfcmd::MainWindow::actionPerferences()
     dialog.exec();
 }
 
-void qfcmd::MainWindow::slotCloseCurrentTab()
+void qfcmd::MainWindow::slotShortcutCloseTab()
 {
-    QWidget* w = QApplication::focusWidget();
-    while (w != nullptr)
-    {
-        if (w == m_inner->leftPanel)
-        {
-            break;
-        }
-        else if (w == m_inner->rightPanel)
-        {
-            break;
-        }
-
-        w = qobject_cast<QWidget*>(w->parent());
-    }
-
-    if (w == nullptr)
+    qfcmd::FsTabWidget* tabWidget =_get_activate_panel(m_inner);
+    if (tabWidget == nullptr)
     {
         return;
     }
+    tabWidget->closeCurrentActivateTab();
+}
 
-    qfcmd::FsTabWidget* tabWidget = qobject_cast<qfcmd::FsTabWidget*>(w);
-    tabWidget->closeCurrentActiveTab();
+void qfcmd::MainWindow::slotShortcutDuplicateTab()
+{
+    qfcmd::FsTabWidget* tabWidget =_get_activate_panel(m_inner);
+    if (tabWidget == nullptr)
+    {
+        return;
+    }
+    tabWidget->duplicateCurrentActivateTab();
 }

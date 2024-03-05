@@ -32,6 +32,7 @@ qfcmd::FsTreeView::FsTreeView(QWidget* parent)
 
 qfcmd::FsTreeView::~FsTreeView()
 {
+    delete m_inner;
 }
 
 void qfcmd::FsTreeView::slotChangeDirectory(const QString& path)

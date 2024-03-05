@@ -13,6 +13,9 @@ public:
     FsTabWidget(QWidget* parent = nullptr);
     virtual ~FsTabWidget();
 
+public:
+    void closeCurrentActiveTab();
+
 protected:
     /**
      * @see https://doc.qt.io/qt-6/qwidget.html#mousePressEvent

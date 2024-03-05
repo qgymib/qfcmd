@@ -10,6 +10,7 @@
 #endif
 
 #include "widget/mainwindow.hpp"
+#include "settings.hpp"
 
 static void _setup_i18n(QApplication& a)
 {
@@ -63,9 +64,7 @@ static void _setup_app(QApplication& a)
         Q_UNREACHABLE();
     }
 
-    /* Set config file format and location. */
-    QSettings::setDefaultFormat(QSettings::IniFormat);
-    QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, QApplication::applicationDirPath());
+    qfcmd::Settings::init();
 }
 
 /**
@@ -73,6 +72,7 @@ static void _setup_app(QApplication& a)
  */
 static void _at_exit()
 {
+    qfcmd::Settings::exit();
 }
 
 int main(int argc, char *argv[])

@@ -10,6 +10,7 @@
 #include <QStatusBar>
 #include <QToolBar>
 #include <QSettings>
+#include <QShortcut>
 
 #include "mainwindow.hpp"
 #include "aboutdialog.hpp"
@@ -18,6 +19,7 @@
 #include "fstabwidget.hpp"
 #include "fstreeview.hpp"
 #include "fcmdshortcutmanager.hpp"
+#include "settings.hpp"
 
 namespace qfcmd {
 struct MainWindowInner
@@ -41,6 +43,8 @@ struct MainWindowInner
     QMenu*                  menuEdit;
     QStatusBar*             statusbar;
     QToolBar*               toolBar;
+
+    QShortcut*              shortcutCloseCurrentTab;
 
     QSettings*              settings;
     FcmdShortCutManager*    shortcut_mgr;
@@ -100,6 +104,9 @@ qfcmd::MainWindowInner::MainWindowInner(MainWindow* parent)
 
     parent->resize(1366, 768);
 
+    shortcutCloseCurrentTab = new QShortcut(qfcmd::Settings::get<QKeySequence>(qfcmd::Settings::CLOSE_CURRENT_TAB),
+                                            parent);
+
     settings = new QSettings;
     shortcut_mgr = new FcmdShortCutManager(parent);
 }
@@ -124,6 +131,8 @@ qfcmd::MainWindow::MainWindow(QWidget *parent)
 {
     _mainwindow_setupActions(m_inner);
     setWindowIcon(QIcon(":/app.ico"));
+
+    connect(m_inner->shortcutCloseCurrentTab, &QShortcut::activated, this, &MainWindow::slotCloseCurrentTab);
 
     {
         m_inner->treeView->slotChangeDirectory(QDir::currentPath());
@@ -164,4 +173,30 @@ void qfcmd::MainWindow::actionPerferences()
     dialog.addConfigWidget(new KeyboardShortcutsForm(m_inner->shortcut_mgr->getShortcutMap()));
 
     dialog.exec();
+}
+
+void qfcmd::MainWindow::slotCloseCurrentTab()
+{
+    QWidget* w = QApplication::focusWidget();
+    while (w != nullptr)
+    {
+        if (w == m_inner->leftPanel)
+        {
+            break;
+        }
+        else if (w == m_inner->rightPanel)
+        {
+            break;
+        }
+
+        w = qobject_cast<QWidget*>(w->parent());
+    }
+
+    if (w == nullptr)
+    {
+        return;
+    }
+
+    qfcmd::FsTabWidget* tabWidget = qobject_cast<qfcmd::FsTabWidget*>(w);
+    tabWidget->closeCurrentActiveTab();
 }

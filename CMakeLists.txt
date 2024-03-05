@@ -47,6 +47,9 @@ set(PROJECT_SOURCES
         # Utils
         src/utils/win32.hpp
         src/utils/win32.cpp
+        # Settings
+        src/settings.hpp
+        src/settings.cpp
         # Resources
         res/app.qrc
         res/app.rc

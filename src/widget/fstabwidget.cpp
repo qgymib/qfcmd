@@ -6,6 +6,7 @@
 
 #include "fstabwidget.hpp"
 #include "fsfoldertab.hpp"
+#include "settings.hpp"
 
 qfcmd::FsTabWidget::FsTabWidget(QWidget* parent)
     : QTabWidget(parent)
@@ -20,6 +21,12 @@ qfcmd::FsTabWidget::FsTabWidget(QWidget* parent)
 
 qfcmd::FsTabWidget::~FsTabWidget()
 {
+}
+
+void qfcmd::FsTabWidget::closeCurrentActiveTab()
+{
+    int idx = currentIndex();
+    slotTabCloseRequest(idx);
 }
 
 void qfcmd::FsTabWidget::mousePressEvent(QMouseEvent *event)
@@ -89,6 +96,7 @@ void qfcmd::FsTabWidget::slotContextMenuRequest(const QPoint &pos)
     if (count() > 1)
     {
         QAction* act = menu->addAction("Close", this, &FsTabWidget::slotTabCloseAction);
+        act->setShortcut(qfcmd::Settings::get<QKeySequence>(qfcmd::Settings::CLOSE_CURRENT_TAB));
         act->setData(idx);
     }
 

@@ -20,6 +20,12 @@ public slots:
     void actionShowToolbarChange();
     void actionPerferences();
 
+    /**
+     * @brief Close current tab.
+     * @see qfcmd::Settings::CLOSE_CURRENT_TAB
+     */
+    void slotCloseCurrentTab();
+
 private:
     MainWindowInner*    m_inner;
 };

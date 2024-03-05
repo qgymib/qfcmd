@@ -5,7 +5,7 @@
 namespace qfcmd {
 struct SettingsInner
 {
-    explicit SettingsInner();
+    SettingsInner();
     ~SettingsInner();
 };
 } /* namespace qfcmd */

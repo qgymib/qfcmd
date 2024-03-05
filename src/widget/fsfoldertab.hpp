@@ -17,6 +17,10 @@ public:
     ~FolderTab();
 
 public:
+    /**
+     * @brief Get filesystem path.
+     * @return Path.
+     */
     QString path() const;
 
 signals:

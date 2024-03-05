@@ -8,19 +8,69 @@
 #include "fsfoldertab.hpp"
 #include "settings.hpp"
 
-qfcmd::FsTabWidget::FsTabWidget(QWidget* parent)
-    : QTabWidget(parent)
+namespace qfcmd {
+struct FsTabWidgetInner
 {
+    FsTabWidgetInner(FsTabWidget* parent);
+    ~FsTabWidgetInner();
+
+    FsTabWidget*                                    parent;
+    std::function<void(const QStringList&, int)>    cb;
+};
+} /* namespace qfcmd */
+
+qfcmd::FsTabWidgetInner::FsTabWidgetInner(FsTabWidget *parent)
+{
+    this->parent = parent;
+}
+
+qfcmd::FsTabWidgetInner::~FsTabWidgetInner()
+{
+}
+
+qfcmd::FsTabWidget::FsTabWidget(QWidget* parent,
+                                const QStringList& paths,
+                                int activate_idx,
+                                std::function<void(const QStringList&, int)> cb)
+    : QTabWidget(parent)
+    , m_inner(new FsTabWidgetInner(this))
+{
+    m_inner->cb = cb;
     setContextMenuPolicy(Qt::CustomContextMenu);
 
     connect(this, &QTabWidget::tabCloseRequested, this, &FsTabWidget::slotTabCloseRequest);
     connect(this, &QWidget::customContextMenuRequested, this, &FsTabWidget::slotContextMenuRequest);
 
-    slotOpenNewTab(QDir::homePath());
+    for(QString path : paths)
+    {
+        slotOpenNewTab(path);
+    }
+    if (paths.size() == 0)
+    {
+        slotOpenNewTab(QDir::homePath());
+    }
+
+    setCurrentIndex(activate_idx);
 }
 
 qfcmd::FsTabWidget::~FsTabWidget()
 {
+    QStringList tabs;
+
+    for (int i = 0; i < count(); i++)
+    {
+        qfcmd::FolderTab* tab = qobject_cast<qfcmd::FolderTab*>(widget(i));
+        if (tab == nullptr)
+        {
+            continue;
+        }
+
+        tabs << tab->path();
+    }
+
+    m_inner->cb(tabs, currentIndex());
+
+    delete m_inner;
 }
 
 void qfcmd::FsTabWidget::closeCurrentActivateTab()

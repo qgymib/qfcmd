@@ -3,6 +3,7 @@
 
 #include <QVariant>
 #include <QKeySequence>
+#include <QStringList>
 
 /**
  * @brief Settings table.
@@ -13,8 +14,12 @@
  * + The default value of the setting.
  */
 #define QFCMD_SETTINGS_TABLE(xx)  \
-    xx(CLOSE_TAB,       "Shortcuts/CloseTab",       QKeySequence(Qt::CTRL | Qt::Key_W))  \
-    xx(DUPLICATE_TAB,   "Shortcuts/DuplicateTab",   QKeySequence(Qt::CTRL | Qt::Key_T))
+    xx(CLOSE_TAB,               "Shortcuts/CloseTab",       QKeySequence(Qt::CTRL | Qt::Key_W)) \
+    xx(DUPLICATE_TAB,           "Shortcuts/DuplicateTab",   QKeySequence(Qt::CTRL | Qt::Key_T)) \
+    xx(TABS_PANEL_0,            "Tabs/Panel_0",             QStringList())                      \
+    xx(TABS_PANEL_1,            "Tabs/Panel_1",             QStringList())                      \
+    xx(TABS_PANEL_0_ACTIVATE,   "Tabs/Panel_0_Activate",    0)                                  \
+    xx(TABS_PANEL_1_ACTIVATE,   "Tabs/Panel_1_Activate",    0)
 
 namespace qfcmd {
 
@@ -28,6 +33,8 @@ public:
 #define QFCMD_EXPAND_SETTINGS_TABLE_AS_ENUM(e, ...)    e,
         QFCMD_SETTINGS_TABLE(QFCMD_EXPAND_SETTINGS_TABLE_AS_ENUM)
 #undef QFCMD_EXPAND_SETTINGS_TABLE_AS_ENUM
+
+        MAX_SETTING_ITEM, /**< The number of setting items. */
     };
 
 public:
@@ -44,7 +51,6 @@ public:
      */
     static void exit();
 
-public:
     /**
      * @breif Get the value of the setting.
      * @param[in] item  The enumeration of the setting.
@@ -64,7 +70,8 @@ public:
     static void set(const SettingItem item, const QVariant val);
 
 private:
-    explicit Settings();
+    Settings(const Settings& orig) = delete;
+    Settings();
 
 private:
     static QVariant getConfig(const SettingItem item);

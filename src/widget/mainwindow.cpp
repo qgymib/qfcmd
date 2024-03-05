@@ -35,8 +35,8 @@ struct MainWindowInner
     QSplitter*              centralwidget;
     qfcmd::FsTreeView*      treeView;
     QSplitter*              pannel;
-    qfcmd::FsTabWidget*     leftPanel;
-    qfcmd::FsTabWidget*     rightPanel;
+    qfcmd::FsTabWidget*     panel_0;
+    qfcmd::FsTabWidget*     panel_1;
     QMenuBar*               menubar;
     QMenu*                  menuHelp;
     QMenu*                  menuView;
@@ -68,11 +68,11 @@ static qfcmd::FsTabWidget* _get_activate_panel(qfcmd::MainWindowInner* inner)
     QWidget* w = QApplication::focusWidget();
     while (w != nullptr)
     {
-        if (w == inner->leftPanel)
+        if (w == inner->panel_0)
         {
             break;
         }
-        else if (w == inner->rightPanel)
+        else if (w == inner->panel_1)
         {
             break;
         }
@@ -102,12 +102,24 @@ qfcmd::MainWindowInner::MainWindowInner(MainWindow* parent)
 	centralwidget->addWidget(treeView);
 	pannel = new QSplitter(centralwidget);
 	pannel->setOrientation(Qt::Horizontal);
-	leftPanel = new qfcmd::FsTabWidget(pannel);
-	leftPanel->setMovable(true);
-	pannel->addWidget(leftPanel);
-	rightPanel = new qfcmd::FsTabWidget(pannel);
-	rightPanel->setMovable(true);
-	pannel->addWidget(rightPanel);
+    panel_0 = new qfcmd::FsTabWidget(pannel,
+                                     qfcmd::Settings::get<QStringList>(qfcmd::Settings::TABS_PANEL_0),
+                                     qfcmd::Settings::get<int>(qfcmd::Settings::TABS_PANEL_0_ACTIVATE),
+                                     [](const QStringList& tabs, int idx){
+                                         qfcmd::Settings::set(qfcmd::Settings::TABS_PANEL_0, tabs);
+                                         qfcmd::Settings::set(qfcmd::Settings::TABS_PANEL_0_ACTIVATE, idx);
+                                     });
+    panel_0->setMovable(true);
+    pannel->addWidget(panel_0);
+    panel_1 = new qfcmd::FsTabWidget(pannel,
+                                     qfcmd::Settings::get<QStringList>(qfcmd::Settings::TABS_PANEL_1),
+                                     qfcmd::Settings::get<int>(qfcmd::Settings::TABS_PANEL_1_ACTIVATE),
+                                     [](const QStringList& tabs, int idx){
+                                         qfcmd::Settings::set(qfcmd::Settings::TABS_PANEL_1, tabs);
+                                         qfcmd::Settings::set(qfcmd::Settings::TABS_PANEL_1_ACTIVATE, idx);
+                                     });
+    panel_1->setMovable(true);
+    pannel->addWidget(panel_1);
 	centralwidget->addWidget(pannel);
 	parent->setCentralWidget(centralwidget);
 	menubar = new QMenuBar(parent);

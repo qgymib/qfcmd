@@ -2,15 +2,28 @@
 #define QFCMD_FS_TABWIDGET_HPP
 
 #include <QTabWidget>
+#include <functional>
 
 namespace qfcmd {
+
+struct FsTabWidgetInner;
 
 class FsTabWidget : public QTabWidget
 {
     Q_OBJECT
 
 public:
-    FsTabWidget(QWidget* parent = nullptr);
+    /**
+     * @brief Constructor of TabWidget
+     * @param[in] parent - parent widget.
+     * @param[in] paths - list of paths to open.
+     * @param[in] activate_idx - index of tab to activate.
+     * @param[in] cb - callback function when exit.
+     */
+    FsTabWidget(QWidget* parent,
+                const QStringList& paths,
+                int activate_idx,
+                std::function<void(const QStringList&, int)> cb);
     virtual ~FsTabWidget();
 
 public:
@@ -54,6 +67,9 @@ private slots:
      * @param[in] pos   Position.
      */
     void slotContextMenuRequest(const QPoint& pos);
+
+private:
+    FsTabWidgetInner* m_inner;
 };
 
 } /* namespace qfcmd */

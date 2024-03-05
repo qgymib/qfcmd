@@ -187,6 +187,9 @@ qfcmd::MainWindow::MainWindow(QWidget *parent)
         m_inner->toolBar->setVisible(visible);
         m_inner->actionShowToolbar->setChecked(visible);
     }
+
+    /* By default we focus on panel_0 */
+    m_inner->panel_0->setFocus();
 }
 
 qfcmd::MainWindow::~MainWindow()

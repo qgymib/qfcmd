@@ -128,6 +128,11 @@ void qfcmd::FsTabWidget::slotTabCloseRequest(int index)
         return;
     }
     removeTab(index);
+
+    /*
+     * Re-focus on this widget, so user can press Ctrl+W again to close other tabs.
+     */
+    setFocus();
 }
 
 void qfcmd::FsTabWidget::slotOpenNewTab(const QString& path)

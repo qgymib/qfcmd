@@ -46,6 +46,8 @@ struct MainWindowInner
 
     QShortcut*              scCloseTab;
     QShortcut*              scDuplicateTab;
+    QShortcut*              scGoBack;
+    QShortcut*              scGoForward;
 
     QSettings*              settings;
     FcmdShortCutManager*    shortcut_mgr;
@@ -153,10 +155,14 @@ qfcmd::MainWindowInner::MainWindowInner(MainWindow* parent)
 
     parent->resize(1366, 768);
 
-    scCloseTab = new QShortcut(qfcmd::Settings::get<QKeySequence>(qfcmd::Settings::CLOSE_TAB),
+    scCloseTab = new QShortcut(qfcmd::Settings::get<QKeySequence>(qfcmd::Settings::SHORTCUT_CLOSE_TAB),
                                parent);
-    scDuplicateTab = new QShortcut(qfcmd::Settings::get<QKeySequence>(qfcmd::Settings::DUPLICATE_TAB),
+    scDuplicateTab = new QShortcut(qfcmd::Settings::get<QKeySequence>(qfcmd::Settings::SHORTCUT_DUPLICATE_TAB),
                                    parent);
+    scGoBack = new QShortcut(qfcmd::Settings::get<QKeySequence>(qfcmd::Settings::SHORTCUT_GO_BACK),
+                             parent);
+    scGoForward = new QShortcut(qfcmd::Settings::get<QKeySequence>(qfcmd::Settings::SHORTCUT_GO_FORWARD),
+                                parent);
 
     settings = new QSettings;
     shortcut_mgr = new FcmdShortCutManager(parent);
@@ -177,6 +183,8 @@ qfcmd::MainWindow::MainWindow(QWidget *parent)
 
     connect(m_inner->scCloseTab, &QShortcut::activated, this, &MainWindow::slotShortcutCloseTab);
     connect(m_inner->scDuplicateTab, &QShortcut::activated, this, &MainWindow::slotShortcutDuplicateTab);
+    connect(m_inner->scGoBack, &QShortcut::activated, this, &MainWindow::slotShortcutGoBack);
+    connect(m_inner->scGoForward, &QShortcut::activated, this, &MainWindow::slotShortcutGoForward);
 
     {
         m_inner->treeView->slotChangeDirectory(QDir::currentPath());
@@ -240,4 +248,24 @@ void qfcmd::MainWindow::slotShortcutDuplicateTab()
         return;
     }
     tabWidget->duplicateCurrentActivateTab();
+}
+
+void qfcmd::MainWindow::slotShortcutGoBack()
+{
+    qfcmd::FsTabWidget* tabWidget =_get_activate_panel(m_inner);
+    if (tabWidget == nullptr)
+    {
+        return;
+    }
+    tabWidget->goBack();
+}
+
+void qfcmd::MainWindow::slotShortcutGoForward()
+{
+    qfcmd::FsTabWidget* tabWidget =_get_activate_panel(m_inner);
+    if (tabWidget == nullptr)
+    {
+        return;
+    }
+    tabWidget->goForward();
 }

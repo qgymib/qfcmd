@@ -14,11 +14,13 @@
  * + The default value of the setting.
  */
 #define QFCMD_SETTINGS_TABLE(xx)  \
-    xx(CLOSE_TAB,               "Shortcuts/CloseTab",       QKeySequence(Qt::CTRL | Qt::Key_W)) \
-    xx(DUPLICATE_TAB,           "Shortcuts/DuplicateTab",   QKeySequence(Qt::CTRL | Qt::Key_T)) \
-    xx(TABS_PANEL_0,            "Tabs/Panel_0",             QStringList())                      \
-    xx(TABS_PANEL_1,            "Tabs/Panel_1",             QStringList())                      \
-    xx(TABS_PANEL_0_ACTIVATE,   "Tabs/Panel_0_Activate",    0)                                  \
+    xx(SHORTCUT_CLOSE_TAB,      "Shortcuts/CloseTab",       QKeySequence(Qt::CTRL | Qt::Key_W))     \
+    xx(SHORTCUT_DUPLICATE_TAB,  "Shortcuts/DuplicateTab",   QKeySequence(Qt::CTRL | Qt::Key_T))     \
+    xx(SHORTCUT_GO_BACK,        "Shortcuts/GoBack",         QKeySequence(Qt::ALT | Qt::Key_Left))   \
+    xx(SHORTCUT_GO_FORWARD,     "Shortcuts/GoForward",      QKeySequence(Qt::ALT | Qt::Key_Right))  \
+    xx(TABS_PANEL_0,            "Tabs/Panel_0",             QStringList())                          \
+    xx(TABS_PANEL_1,            "Tabs/Panel_1",             QStringList())                          \
+    xx(TABS_PANEL_0_ACTIVATE,   "Tabs/Panel_0_Activate",    0)                                      \
     xx(TABS_PANEL_1_ACTIVATE,   "Tabs/Panel_1_Activate",    0)
 
 namespace qfcmd {

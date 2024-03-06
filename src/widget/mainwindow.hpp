@@ -38,6 +38,16 @@ public slots:
      */
     void slotShortcutDuplicateTab();
 
+    /**
+     * @brief Go Back
+     */
+    void slotShortcutGoBack();
+
+    /**
+     * @brief Go forward
+     */
+    void slotShortcutGoForward();
+
 private:
     MainWindowInner*    m_inner;
 };

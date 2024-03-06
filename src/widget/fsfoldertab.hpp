@@ -23,6 +23,17 @@ public:
      */
     QString path() const;
 
+public slots:
+    /**
+     * @brief Go back to previous directory.
+     */
+    void slotGoBack();
+
+    /**
+     * @brief Go forward to next directory.
+     */
+    void slotGoForward();
+
 signals:
     /**
      * @brief Open focus file in new tab.
@@ -45,8 +56,6 @@ private slots:
      */
     void slotOpenInNewTab();
 
-    void onGoBackClicked();
-    void onGoForwardClicked();
     void onGoUpClicked();
     void slotTableViewContextMenuRequested(QPoint pos);
     void slotShowProperties();

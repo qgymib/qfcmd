@@ -218,8 +218,8 @@ qfcmd::FolderTab::FolderTab(const QString& path, QWidget *parent)
         _folder_tab_cd_with_history(m_inner, path);
     }
 
-    connect(m_inner->goBack, &QPushButton::clicked, this, &FolderTab::onGoBackClicked);
-    connect(m_inner->goForward, &QPushButton::clicked, this, &FolderTab::onGoForwardClicked);
+    connect(m_inner->goBack, &QPushButton::clicked, this, &FolderTab::slotGoBack);
+    connect(m_inner->goForward, &QPushButton::clicked, this, &FolderTab::slotGoForward);
     connect(m_inner->goUp, &QPushButton::clicked, this, &FolderTab::onGoUpClicked);
     connect(m_inner->treeView, &QTableView::doubleClicked, this, &FolderTab::slotOpenItem);
     connect(m_inner->treeView, &QTableView::customContextMenuRequested, this, &FolderTab::slotTableViewContextMenuRequested);
@@ -235,7 +235,7 @@ QString qfcmd::FolderTab::path() const
     return m_inner->path_history[m_inner->path_idx];
 }
 
-void qfcmd::FolderTab::onGoBackClicked()
+void qfcmd::FolderTab::slotGoBack()
 {
     if (m_inner->path_idx > 0)
     {
@@ -245,7 +245,7 @@ void qfcmd::FolderTab::onGoBackClicked()
     }
 }
 
-void qfcmd::FolderTab::onGoForwardClicked()
+void qfcmd::FolderTab::slotGoForward()
 {
     if (m_inner->path_idx < m_inner->path_history.size() - 1)
     {

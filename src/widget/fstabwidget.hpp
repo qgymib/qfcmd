@@ -30,6 +30,16 @@ public:
     void closeCurrentActivateTab();
     void duplicateCurrentActivateTab();
 
+    /**
+     * @brief Trigger `Go back` for current tab.
+     */
+    void goBack();
+
+    /**
+     * @brief Trigger `Go forward` for current tab.
+     */
+    void goForward();
+
 protected:
     /**
      * @see https://doc.qt.io/qt-6/qwidget.html#mousePressEvent

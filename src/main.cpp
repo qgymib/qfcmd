@@ -10,6 +10,7 @@
 #endif
 
 #include "widget/mainwindow.hpp"
+#include "utils/log.hpp"
 #include "settings.hpp"
 
 static void _setup_i18n(QApplication& a)
@@ -46,6 +47,12 @@ static void _setup_app(QApplication& a)
                                         QStandardPaths::writableLocation(QStandardPaths::ConfigLocation));
     parser.addOption(opt_config);
 
+    const QCommandLineOption opt_log("log",
+    QApplication::translate("MainWindow", "Log file path."),
+                                        "path",
+                                        "");
+    parser.addOption(opt_log);
+
     if (!parser.parse(QApplication::arguments()))
     {
         QTextStream(stderr) << parser.errorText() << Qt::endl;
@@ -64,6 +71,12 @@ static void _setup_app(QApplication& a)
         Q_UNREACHABLE();
     }
 
+    QString logfile;
+    if (parser.isSet(opt_log))
+    {
+        logfile = parser.value(opt_log);
+    }
+    qfcmd::Log::init(logfile);
     qfcmd::Settings::init();
 }
 
@@ -73,6 +86,7 @@ static void _setup_app(QApplication& a)
 static void _at_exit()
 {
     qfcmd::Settings::exit();
+    qfcmd::Log::exit();
 }
 
 int main(int argc, char *argv[])

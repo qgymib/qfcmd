@@ -9,16 +9,10 @@ namespace qfcmd {
 class wchar
 {
 public:
+    wchar(const wchar_t* str);
+    wchar(const QString& str);
     wchar(const wchar& orig);
     virtual ~wchar();
-
-public:
-    /**
-     * @brief Convert QString to wchar_t.
-     * @param[in] str   The QString.
-     * @return          The wchar_t string.
-     */
-    static wchar fromQString(const QString& str);
 
 public:
     /**
@@ -32,10 +26,6 @@ public:
      * @return The QString.
      */
     QString toQString() const;
-
-private:
-    /* Default constructor is not allowed. */
-    wchar();
 
 private:
     wchar_t*    m_str;  /**< The wchar_t string. */

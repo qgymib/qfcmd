@@ -45,6 +45,8 @@ set(PROJECT_SOURCES
         src/model/keyboardshortcuts.hpp
         src/model/keyboardshortcuts.cpp
         # Utils
+        src/utils/log.hpp
+        src/utils/log.cpp
         src/utils/win32.hpp
         src/utils/win32.cpp
         # Settings

@@ -113,7 +113,7 @@ qfcmd::FolderTabInner::~FolderTabInner()
 #if defined(_WIN32)
 static void _show_file_properties(const QString& path)
 {
-    qfcmd::wchar w_path = qfcmd::wchar::fromQString(path);
+    qfcmd::wchar w_path(path);
 
     SHELLEXECUTEINFOW aShExecInfo;
     ZeroMemory(&aShExecInfo, sizeof(SHELLEXECUTEINFOW));

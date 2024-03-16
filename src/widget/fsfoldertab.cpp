@@ -271,7 +271,8 @@ void qfcmd::FolderTab::onGoUpClicked()
         return;
     }
 
-    _folder_tab_cd_with_history(m_inner, dir.absolutePath());
+    const QString absPath = dir.absolutePath();
+    _folder_tab_cd_with_history(m_inner, absPath);
 }
 
 void qfcmd::FolderTab::slotOpenItem()

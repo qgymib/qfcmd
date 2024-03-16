@@ -146,6 +146,7 @@ QModelIndex qfcmd::FileSystemModel::parent(const QModelIndex &index) const
         return QModelIndex();
     }
 
+    Q_ASSERT(parentNode->m_children.size() == parentNode->m_visibleChildren.size());
     int visualRow = parentNode->m_visibleChildren.indexOf(node->m_name);
     Q_ASSERT(visualRow >= 0);
 

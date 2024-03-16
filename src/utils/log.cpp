@@ -45,7 +45,7 @@ static void _log_msg_handler(QtMsgType type, const QMessageLogContext& ctx, cons
         logfile = s_log->logfile;
     }
 
-    fprintf(logfile, "%s", qUtf8Printable(message));
+    fprintf(logfile, "%s\n", qUtf8Printable(message));
     fflush(logfile);
 }
 

@@ -97,6 +97,37 @@ static QIcon _fs_model_get_local_file_icon_direct_read(const QUrl &url, const qf
     return QIcon(pix);
 }
 
+static qfcmd::FileSystemModelNode* _fs_model_get_authority_node(qfcmd::FileSystemModelNode* schemeNode, const QUrl &url)
+{
+    const QString authority = url.authority();
+    auto it = schemeNode->m_children.find(authority);
+    if (it != schemeNode->m_children.end())
+    {
+        return it.value();
+    }
+
+    qfcmd::FileSystemModelNode* authorityNode = new qfcmd::FileSystemModelNode(schemeNode);
+    authorityNode->m_name = authority;
+    schemeNode->m_children.insert(authority, authorityNode);
+    schemeNode->m_visibleChildren.append(authority);
+
+    return authorityNode;
+}
+
+static QStringList _fs_model_split_path(const QUrl& url)
+{
+    /*
+     * Possible syntax are:
+     * + `/`
+     * + `/foo`
+     * + `/foo/`
+     */
+    QString path = url.path();
+    QStringList paths = path.split('/', Qt::SkipEmptyParts);
+
+    return paths;
+}
+
 qfcmd::IconProvider::IconProvider()
 {
 }
@@ -150,6 +181,9 @@ qfcmd::FileSystemModelNode::~FileSystemModelNode()
 
         m_parent->m_children.remove(m_name);
         m_parent->m_visibleChildren.removeOne(m_name);
+
+        Q_ASSERT(m_parent->m_children.size() == m_parent->m_visibleChildren.size());
+
         m_parent = nullptr;
     }
 
@@ -231,9 +265,12 @@ qfcmd::FileSystemModelInner::~FileSystemModelInner()
 qfcmd::FileSystemModelNode* qfcmd::FileSystemModelInner::getNode(const QUrl &url)
 {
     FileSystem::FsPtr fs = VFS::accessfs(url);
-    const QStringList paths = url.path().split('/');
+    const QStringList paths = _fs_model_split_path(url);
 
-    qfcmd::FileSystemModelNode* node = _fs_model_get_scheme_node(this, url);
+    qfcmd::FileSystemModelNode* schemeNode = _fs_model_get_scheme_node(this, url);
+    qfcmd::FileSystemModelNode* authorityNode = _fs_model_get_authority_node(schemeNode, url);
+
+    qfcmd::FileSystemModelNode* node = authorityNode;
     for (qsizetype i = 0; i < paths.size(); i++)
     {
         const QString name = paths[i];
@@ -267,24 +304,42 @@ QModelIndex qfcmd::FileSystemModelInner::getIndex(FileSystemModelNode *node)
     }
 
     int visualRow = parentNode->m_visibleChildren.indexOf(node->m_name);
+    Q_ASSERT(visualRow >= 0);
+
     return m_parent->createIndex(visualRow, 0, node);
 }
 
 QUrl qfcmd::FileSystemModelInner::getUrl(const FileSystemModelNode* node)
 {
-    QStringList path;
+    QList<const FileSystemModelNode*> nodeChain;
 
-    for (; node != nullptr && node != m_root; node = node->m_parent)
+    const FileSystemModelNode* tmpNode = node;
+    for (; tmpNode->m_parent != nullptr; tmpNode = tmpNode->m_parent)
     {
-        path.prepend(node->m_name);
+        nodeChain.prepend(tmpNode);
     }
 
-    QString fullPath = path[0];
-    for (qsizetype i = 1; i < path.size() - 1; i++)
+    /*
+     * [0]: scheme
+     * [1]: authority
+     */
+    Q_ASSERT(nodeChain.size() >= 2);
+
+    QString fullPath = nodeChain.takeFirst()->m_name;
+    fullPath += nodeChain.takeFirst()->m_name + "/";
+
+    size_t cnt = 0;
+    while (!nodeChain.isEmpty())
     {
-        fullPath += path[i] + "/";
+        fullPath += nodeChain.takeFirst()->m_name + "/";
+        cnt++;
     }
-    fullPath += path.last();
+
+    /* If path empty, the last slash should not remove */
+    if (cnt != 0 && !(node->m_stat.st_mode & QFCMD_FS_S_IFDIR))
+    {
+        fullPath.chop(1);
+    }
 
     return QUrl(fullPath);
 }
@@ -323,7 +378,7 @@ void qfcmd::FileSystemModelInner::handleFetchResult(const QUrl& url, int ret, co
     for (auto it = node->m_children.begin(); it != node->m_children.end(); )
     {
         const QString childName = it.key();
-        FileSystemModelNode* child = node->m_children.value(childName);
+        FileSystemModelNode* child = it.value();
 
         auto entry_it = entryCopy.find(childName);
 
@@ -331,10 +386,20 @@ void qfcmd::FileSystemModelInner::handleFetchResult(const QUrl& url, int ret, co
         if (entry_it == entryCopy.end())
         {
             int row = node->m_visibleChildren.indexOf(childName);
+            Q_ASSERT(row >= 0);
+
             m_parent->beginRemoveRows(nodeIndex, row, row);
-            it = node->m_children.erase(it);
-            delete child;
+            {
+                /*
+                 * The following delete step automatically remove child from tree,
+                 * so we need to move iterator to next node, without delete it.
+                 */
+                it++;
+                delete child;
+            }
             m_parent->endRemoveRows();
+            Q_ASSERT(node->m_children.size() == node->m_visibleChildren.size());
+
             continue;
         }
 

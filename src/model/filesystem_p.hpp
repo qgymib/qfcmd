@@ -101,7 +101,43 @@ public:
     QVector<TitleEntry>     m_titles;       /**< The column titles. */
     Qt::SortOrder           m_sort_order;   /**< The sort order. */
     FileSystemModel*        m_parent;       /**< The parent object. */
-    FileSystemModelNode*    m_root;         /**< The root node. */
+
+    /**
+     * @brief The root node.
+     *
+     * Layout:
+     * ```
+     * root
+     * |- scheme
+     *   |- authority
+     *     |- path (optional)
+     * ```
+     *
+     * Example 1, the URL `file:///foo/bar` and `file:///foo/bar/` is splited into:
+     * ```
+     * root
+     * |- file://
+     *   |- (empty)
+     *     |- foo
+     *       |- bar
+     * ```
+     *
+     * Example 2, the URL `file:///` is splited into:
+     * ```
+     * root
+     * |- file://
+     *   |- (empty)
+     * ```
+     *
+     * Example 3, the URL `http://foo.com` and `http://foo.com/` is splited into:
+     * ```
+     * root
+     * |- http://
+     *   |- foo.com
+     * ```
+     * which is no path nodes.
+     */
+    FileSystemModelNode*    m_root;
 
 private:
     QThread                 m_workerThread;

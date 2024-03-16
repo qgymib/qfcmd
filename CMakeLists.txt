@@ -9,6 +9,8 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+option(ASAN "Enable AddressSanitizer" OFF)
+
 find_package(QT NAMES Qt6 REQUIRED COMPONENTS Core)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets LinguistTools DBus)
 
@@ -119,6 +121,11 @@ if (CMAKE_C_COMPILER_ID STREQUAL "MSVC")
     target_compile_options(qfcmd PRIVATE /W4 /WX)
 else ()
     target_compile_options(qfcmd PRIVATE -Wall -Wextra -Werror)
+endif ()
+
+if (ASAN)
+    target_compile_options(qfcmd PRIVATE -fsanitize=address)
+	target_link_options(qfcmd PRIVATE -fsanitize=address)
 endif ()
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.

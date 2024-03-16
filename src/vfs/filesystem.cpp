@@ -56,6 +56,7 @@ qfcmd::FileSystem::FileSystem(qfcmd_filesystem_t *fs, QObject *parent)
 
 qfcmd::FileSystem::~FileSystem()
 {
+    delete m_inner;
 }
 
 int qfcmd::FileSystem::ls(const QUrl& url, FileInfoEntry* entry)

@@ -1,7 +1,6 @@
 #ifndef QFCMD_LOG_HPP
 #define QFCMD_LOG_HPP
 
-#include <QtLogging>
 #include <QString>
 
 namespace qfcmd {

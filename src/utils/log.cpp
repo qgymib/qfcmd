@@ -1,5 +1,6 @@
-#include "log.hpp"
 #include <cstdio>
+#include <QtGlobal>
+#include "log.hpp"
 
 namespace qfcmd {
 struct LogCtx
@@ -44,7 +45,7 @@ static void _log_msg_handler(QtMsgType type, const QMessageLogContext& ctx, cons
         logfile = s_log->logfile;
     }
 
-    fprintf(logfile, qUtf8Printable(message));
+    fprintf(logfile, "%s", qUtf8Printable(message));
     fflush(logfile);
 }
 

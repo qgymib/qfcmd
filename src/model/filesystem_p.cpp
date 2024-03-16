@@ -34,7 +34,7 @@ static QVariant _fs_model_node_get_size(qfcmd::FileSystemModelNode* node)
         return "<" + info + ">";
     }
 
-    return node->m_stat.st_size;
+    return (qsizetype)node->m_stat.st_size;
 }
 
 static QVariant _fs_model_node_get_date(qfcmd::FileSystemModelNode* node)

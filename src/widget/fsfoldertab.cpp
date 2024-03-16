@@ -23,6 +23,13 @@
 #endif
 
 #include "fsfoldertab.hpp"
+#include "model/filesystem.hpp"
+
+#if 0
+#define QFCMD_FS_MODEL  QFileSystemModel
+#else
+#define QFCMD_FS_MODEL  qfcmd::FileSystemModel
+#endif
 
 namespace qfcmd {
 struct FolderTabInner
@@ -40,7 +47,7 @@ struct FolderTabInner
     QPlainTextEdit*     url;
     QTreeView*          treeView;
 
-    QFileSystemModel*   model;                  /* File system model. */
+    QFCMD_FS_MODEL*     model;                  /* File system model. */
     qsizetype           cfg_path_max_history;   /* Max number of path history.*/
     qsizetype           path_idx;               /* Current path. */
     QStringList         path_history;           /* Path history. */
@@ -211,7 +218,7 @@ qfcmd::FolderTab::FolderTab(const QString& path, QWidget *parent)
     }
 
     {
-        m_inner->model = new QFileSystemModel;
+        m_inner->model = new QFCMD_FS_MODEL;
         m_inner->treeView->setModel(m_inner->model);
 
         m_inner->cfg_path_max_history = 1024;
@@ -286,10 +293,9 @@ void qfcmd::FolderTab::slotOpenItem()
 void qfcmd::FolderTab::slotTableViewContextMenuRequested(QPoint pos)
 {
     const QModelIndex idx = m_inner->treeView->indexAt(pos);
-    const QFileInfo info = m_inner->model->fileInfo(idx);
     QMenu* menu = new QMenu(this);
     menu->addAction(tr("Open"), this, &FolderTab::slotOpenItem);
-    if (info.isDir())
+    if (m_inner->model->isDir(idx))
     {
         menu->addAction(tr("Open in new tab"), this, &FolderTab::slotOpenInNewTab);
     }

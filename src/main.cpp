@@ -9,6 +9,8 @@
 #include <windows.h>
 #endif
 
+#include "qfcmd/qfcmd.h"
+#include "vfs/vfs.hpp"
 #include "widget/mainwindow.hpp"
 #include "utils/log.hpp"
 #include "settings.hpp"
@@ -49,8 +51,7 @@ static void _setup_app(QApplication& a)
 
     const QCommandLineOption opt_log("log",
     QApplication::translate("MainWindow", "Log file path."),
-                                        "path",
-                                        "");
+                                        "path");
     parser.addOption(opt_log);
 
     if (!parser.parse(QApplication::arguments()))
@@ -71,13 +72,14 @@ static void _setup_app(QApplication& a)
         Q_UNREACHABLE();
     }
 
-    QString logfile;
+    QString logfile = "./qfcmd.log";
     if (parser.isSet(opt_log))
     {
         logfile = parser.value(opt_log);
     }
     qfcmd::Log::init(logfile);
     qfcmd::Settings::init();
+    qfcmd::VFS::init();
 }
 
 /**
@@ -85,6 +87,7 @@ static void _setup_app(QApplication& a)
  */
 static void _at_exit()
 {
+    qfcmd::VFS::exit();
     qfcmd::Settings::exit();
     qfcmd::Log::exit();
 }

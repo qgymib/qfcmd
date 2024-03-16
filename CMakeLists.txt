@@ -15,6 +15,8 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets LinguistTools DBu
 set(TS_FILES lang/qfcmd_zh_CN.ts)
 
 set(PROJECT_SOURCES
+        # Public header
+        include/qfcmd/filesystem.h
         # Entrypoint
         src/main.cpp
         # PerferencesDialog
@@ -42,9 +44,15 @@ set(PROJECT_SOURCES
         src/fcmdshortcutmanager.hpp
         src/fcmdshortcutmanager.cpp
         # Model
+        src/model/filesystem.hpp
+        src/model/filesystem.cpp
+        src/model/filesystem_p.hpp
+        src/model/filesystem_p.cpp
         src/model/keyboardshortcuts.hpp
         src/model/keyboardshortcuts.cpp
         # Utils
+        src/utils/container.hpp
+        src/utils/container.cpp
         src/utils/log.hpp
         src/utils/log.cpp
         src/utils/win32.hpp
@@ -52,6 +60,13 @@ set(PROJECT_SOURCES
         # Settings
         src/settings.hpp
         src/settings.cpp
+        # VFS
+        src/vfs/filesystem.hpp
+        src/vfs/filesystem.cpp
+        src/vfs/local.hpp
+        src/vfs/local.cpp
+        src/vfs/vfs.hpp
+        src/vfs/vfs.cpp
         # Resources
         res/app.qrc
         res/app.rc

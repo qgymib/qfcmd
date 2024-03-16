@@ -2,18 +2,34 @@
 #define QFCMD_MODEL_FILESYSTEMMODEL_PRIVATE_H
 
 #include <functional>
+#include <QFileIconProvider>
 #include <QModelIndex>
 #include <QObject>
 #include <QString>
 #include <QThread>
 #include <QUrl>
 #include <QVector>
+#include <QIcon>
 
 #include "qfcmd/filesystem.h"
 #include "vfs/filesystem.hpp"
 #include "filesystem.hpp"
 
 namespace qfcmd {
+
+class IconProvider : public QFileIconProvider
+{
+    Q_DISABLE_COPY_MOVE(IconProvider)
+
+public:
+    IconProvider();
+
+public:
+    QIcon icon(const QUrl& url, const qfcmd_fs_stat_t& stat);
+
+private:
+    QIcon getNativeIcon(const QUrl& url, const qfcmd_fs_stat_t& stat);
+};
 
 class FileSystemModelNode
 {
@@ -24,6 +40,8 @@ public:
 public:
     QString                             m_name;             /**< The name of the node. */
     qfcmd_fs_stat_t                     m_stat;             /**< File stat. */
+    QIcon                               m_icon;
+
     FileSystemModelNode*                m_parent;           /**< The parent node. */
     QMap<QString, FileSystemModelNode*> m_children;         /**< The children nodes. */
     QVector<QString>                    m_visibleChildren;  /**< The visible children nodes. */
@@ -45,8 +63,18 @@ class FileSystemModelInner : public QObject
     Q_OBJECT
 
 public:
+
+    enum TitleType
+    {
+        TITLE_NAME,
+        TITLE_EXT,
+        TITLE_SIZE,
+        TITLE_DATE,
+    };
+
     struct TitleEntry
     {
+        TitleType                                               type;
         QString                                                 name;
         std::function<QVariant(qfcmd::FileSystemModelNode*)>    func;
     };
@@ -77,6 +105,7 @@ public:
 
 private:
     QThread                 m_workerThread;
+    IconProvider            m_iconProvider;
 };
 
 } /* namespace qfcmd */

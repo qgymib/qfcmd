@@ -24,6 +24,25 @@ static QVariant _fs_model_data_display(qfcmd::FileSystemModelInner* inner,
     return inner->m_titles[col].func(node);
 }
 
+static QVariant _fs_model_data_decoration(qfcmd::FileSystemModelInner* inner,
+                                          const QModelIndex &index)
+{
+    int col = index.column();
+    if (col < 0 || col >= inner->m_titles.size())
+    {
+        return QVariant();
+    }
+    if (inner->m_titles[col].type != qfcmd::FileSystemModelInner::TITLE_NAME)
+    {
+        return QVariant();
+    }
+
+    qfcmd::FileSystemModelNode* node = _fs_mode_index_to_node(index);
+    Q_ASSERT(node != nullptr);
+
+    return node->m_icon;
+}
+
 qfcmd::FileSystemModel::FileSystemModel(QObject *parent)
     : QAbstractItemModel(parent)
     , m_inner(new FileSystemModelInner(this))
@@ -197,6 +216,9 @@ QVariant qfcmd::FileSystemModel::data(const QModelIndex &index, int role) const
     {
     case Qt::DisplayRole:
         return _fs_model_data_display(m_inner, index);
+
+    case Qt::DecorationRole:
+        return _fs_model_data_decoration(m_inner, index);
 
     default:
         break;

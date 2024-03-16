@@ -1,5 +1,7 @@
 #include <QApplication>
 #include <QDateTime>
+#include <QImageReader>
+#include <QFileInfo>
 #include "vfs/vfs.hpp"
 #include "filesystem_p.hpp"
 
@@ -64,6 +66,75 @@ static bool _fs_model_compare_stat(const qfcmd_fs_stat_t& a, const qfcmd_fs_stat
     return a.st_mode == b.st_mode && a.st_size == b.st_size && a.st_mtime == b.st_mtime;
 }
 
+static QIcon _fs_model_get_local_file_icon_direct_read(const QUrl &url, const qfcmd_fs_stat_t& stat)
+{
+    const uint64_t maxSize = 131072;
+    if (stat.st_size > maxSize)
+    {
+        return QIcon();
+    }
+
+    const QString path = url.toLocalFile();
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly))
+    {
+        return QIcon();
+    }
+
+    QImageReader imgReader(&file);
+    if (!imgReader.canRead())
+    {
+        return QIcon();
+    }
+
+    QImage image;
+    if (!imgReader.read(&image))
+    {
+        return QIcon();
+    }
+
+    QPixmap pix = QPixmap::fromImage(image, Qt::ThresholdDither | Qt::AutoColor);
+    return QIcon(pix);
+}
+
+qfcmd::IconProvider::IconProvider()
+{
+}
+
+QIcon qfcmd::IconProvider::icon(const QUrl &url, const qfcmd_fs_stat_t& stat)
+{
+    QIcon icon;
+    const QString scheme = url.scheme();
+    if (scheme == "file")
+    {
+        icon = getNativeIcon(url, stat);
+    }
+
+    if (!icon.isNull())
+    {
+        return icon;
+    }
+
+    if (stat.st_mode & QFCMD_FS_S_IFDIR)
+    {
+        return QFileIconProvider::icon(QFileIconProvider::Folder);
+    }
+    return QFileIconProvider::icon(QFileIconProvider::File);
+}
+
+QIcon qfcmd::IconProvider::getNativeIcon(const QUrl &url, const qfcmd_fs_stat_t &stat)
+{
+    QIcon icon = _fs_model_get_local_file_icon_direct_read(url, stat);
+    if (!icon.isNull())
+    {
+        return icon;
+    }
+
+    const QString path = url.toLocalFile();
+    const QFileInfo info(path);
+    return QFileIconProvider::icon(info);
+}
+
 qfcmd::FileSystemModelNode::FileSystemModelNode(FileSystemModelNode* parent)
 {
     m_parent = parent;
@@ -113,18 +184,22 @@ qfcmd::FileSystemModelInner::FileSystemModelInner(FileSystemModel *parent)
 {
     m_titles = {
         {
+            TITLE_NAME,
             QApplication::translate("FileSystemModel", "Name"),
             _fs_model_node_get_name,
         },
         {
+            TITLE_EXT,
             QApplication::translate("FileSystemModel", "Ext"),
             _fs_model_node_get_ext,
         },
         {
+            TITLE_SIZE,
             QApplication::translate("FileSystemModel", "Size"),
             _fs_model_node_get_size,
         },
         {
+            TITLE_DATE,
             QApplication::translate("FileSystemModel", "Last modified"),
             _fs_model_node_get_date,
         },
@@ -268,6 +343,7 @@ void qfcmd::FileSystemModelInner::handleFetchResult(const QUrl& url, int ret, co
         if (!_fs_model_compare_stat(info, child->m_stat))
         {
             child->m_stat = info;
+            child->m_icon = m_iconProvider.icon(getUrl(child), info);
             const QModelIndex childIndex = getIndex(child);
             emit m_parent->dataChanged(childIndex, childIndex, {Qt::DisplayRole});
         }
@@ -290,11 +366,13 @@ void qfcmd::FileSystemModelInner::handleFetchResult(const QUrl& url, int ret, co
     m_parent->beginInsertRows(nodeIndex, beginRow, endRow);
     for (auto it = entryCopy.begin(); it != entryCopy.end(); it++)
     {
+        const QString new_node_name = it.key();
         qfcmd::FileSystemModelNode* new_node = new qfcmd::FileSystemModelNode(node);
-        new_node->m_name = it.key();
+        node->m_children.insert(new_node_name, new_node);
+        node->m_visibleChildren.append(new_node_name);
+        new_node->m_name = new_node_name;
         new_node->m_stat = it.value();
-        node->m_children.insert(new_node->m_name, new_node);
-        node->m_visibleChildren.append(new_node->m_name);
+        new_node->m_icon = m_iconProvider.icon(getUrl(new_node), new_node->m_stat);
     }
     m_parent->endInsertRows();
 

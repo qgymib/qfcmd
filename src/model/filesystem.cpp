@@ -166,6 +166,21 @@ static QStringList _fs_model_split_path(const QUrl& url)
     return paths;
 }
 
+static QUrl _fs_model_append_path(const QUrl& url, const QString& path)
+{
+    QString url_path = url.path();
+    if (url_path.endsWith('/'))
+    {
+        url_path.chop(1);
+    }
+
+    url_path += "/" + path;
+
+    QUrl new_url = url;
+    new_url.setPath(url_path);
+    return new_url;
+}
+
 qfcmd::IconProvider::IconProvider()
 {
 }
@@ -248,7 +263,20 @@ void qfcmd::FileSystemModelWorker::doFetch(const QUrl &url)
     FileSystem::FileInfoEntry entry;
     int ret = fs->ls(url, &entry);
 
-    emit fetchReady(url, ret, entry);
+    FileInfoMap records;
+    for (auto it = entry.begin(); it != entry.end(); it++)
+    {
+        const QString name = it.key();
+        const QUrl item_url = _fs_model_append_path(url, name);
+
+        FileInfo info;
+        info.info = it.value();
+        info.icon = m_iconProvider.icon(item_url, info.info);
+
+        records.insert(name, info);
+    }
+
+    emit fetchReady(url, ret, records);
 }
 
 qfcmd::FileSystemModelNode* qfcmd::FileSystemModel::getNode(const QUrl &url)
@@ -347,7 +375,7 @@ void qfcmd::FileSystemModel::clearChildren(FileSystemModelNode *node)
     endRemoveRows();
 }
 
-void qfcmd::FileSystemModel::handleFetchResult(const QUrl& url, int ret, const FileSystem::FileInfoEntry& entry)
+void qfcmd::FileSystemModel::handleFetchResult(const QUrl& url, int ret, const FileSystemModelWorker::FileInfoMap& entry)
 {
     FileSystemModelNode* node = getNode(url);
     Q_ASSERT(node->m_children.size() == node->m_visibleChildren.size());
@@ -361,7 +389,7 @@ void qfcmd::FileSystemModel::handleFetchResult(const QUrl& url, int ret, const F
 
     Q_ASSERT(node->m_children.size() == node->m_visibleChildren.size());
 
-    FileSystem::FileInfoEntry entryCopy = entry;
+    FileSystemModelWorker::FileInfoMap entryCopy = entry;
     const QModelIndex nodeIndex = getIndex(node);
 
     for (auto it = node->m_children.begin(); it != node->m_children.end(); )
@@ -393,11 +421,11 @@ void qfcmd::FileSystemModel::handleFetchResult(const QUrl& url, int ret, const F
         }
 
         /* Child found, check if it is changed. */
-        const qfcmd_fs_stat_t info = entry_it.value();
+        const qfcmd_fs_stat_t info = entry_it.value().info;
         if (!_fs_model_compare_stat(info, child->m_stat))
         {
             child->m_stat = info;
-            child->m_icon = m_iconProvider.icon(getUrl(child), info);
+            child->m_icon = entry_it.value().icon;
             const QModelIndex childIndex = getIndex(child);
             emit dataChanged(childIndex, childIndex, {Qt::DisplayRole});
         }
@@ -425,8 +453,8 @@ void qfcmd::FileSystemModel::handleFetchResult(const QUrl& url, int ret, const F
         node->m_children.insert(new_node_name, new_node);
         node->m_visibleChildren.append(new_node_name);
         new_node->m_name = new_node_name;
-        new_node->m_stat = it.value();
-        new_node->m_icon = m_iconProvider.icon(getUrl(new_node), new_node->m_stat);
+        new_node->m_stat = it.value().info;
+        new_node->m_icon = it.value().icon;
     }
     endInsertRows();
 

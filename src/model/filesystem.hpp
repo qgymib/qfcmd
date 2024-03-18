@@ -50,11 +50,22 @@ class FileSystemModelWorker : public QObject
 {
     Q_OBJECT
 
+public:
+    struct FileInfo
+    {
+        QIcon           icon;
+        qfcmd_fs_stat_t info;
+    };
+    typedef QMap<QString, FileInfo> FileInfoMap;
+
 public slots:
     void doFetch(const QUrl& url);
 
 signals:
-    void fetchReady(const QUrl& url, int ret, const FileSystem::FileInfoEntry& entry);
+    void fetchReady(const QUrl& url, int ret, const FileInfoMap& entry);
+
+private:
+    IconProvider            m_iconProvider;
 };
 
 class FileSystemModel : public QAbstractItemModel
@@ -130,8 +141,8 @@ public:
 signals:
     void doFetch(const QUrl& url) const;
 
-public slots:
-    void handleFetchResult(const QUrl& url, int ret, const FileSystem::FileInfoEntry& entry);
+private slots:
+    void handleFetchResult(const QUrl& url, int ret, const FileSystemModelWorker::FileInfoMap& entry);
 
 public:
     QVector<TitleEntry>     m_titles;       /**< The column titles. */
@@ -173,7 +184,6 @@ public:
      */
     FileSystemModelNode*    m_root;
 
-    IconProvider            m_iconProvider;
     QThread                 m_workerThread;
 };
 

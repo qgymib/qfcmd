@@ -48,8 +48,6 @@ set(PROJECT_SOURCES
         # Model
         src/model/filesystem.hpp
         src/model/filesystem.cpp
-        src/model/filesystem_p.hpp
-        src/model/filesystem_p.cpp
         src/model/keyboardshortcuts.hpp
         src/model/keyboardshortcuts.cpp
         # Utils

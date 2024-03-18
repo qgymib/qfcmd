@@ -4,6 +4,7 @@
 #include <QVariant>
 #include <QKeySequence>
 #include <QStringList>
+#include <QVariant>
 
 /**
  * @brief Settings table.
@@ -21,7 +22,8 @@
     xx(TABS_PANEL_0,            "Tabs/Panel_0",             QStringList())                          \
     xx(TABS_PANEL_1,            "Tabs/Panel_1",             QStringList())                          \
     xx(TABS_PANEL_0_ACTIVATE,   "Tabs/Panel_0_Activate",    0)                                      \
-    xx(TABS_PANEL_1_ACTIVATE,   "Tabs/Panel_1_Activate",    0)
+    xx(TABS_PANEL_1_ACTIVATE,   "Tabs/Panel_1_Activate",    0)                                      \
+    xx(FILE_ASSOCIATION,        "File/Association",         QVariantMap())
 
 namespace qfcmd {
 

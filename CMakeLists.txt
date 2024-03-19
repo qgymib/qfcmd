@@ -25,10 +25,6 @@ set(PROJECT_SOURCES
         src/perferencesdialog.hpp
         src/perferencesdialog.cpp
         src/perferencesdialog.ui
-        # KeyboardShortcutsForm
-        src/keyboardshortcutsform.hpp
-        src/keyboardshortcutsform.cpp
-        src/keyboardshortcutsform.ui
         # Widgets
         src/widget/mainwindow.cpp
         src/widget/mainwindow.hpp
@@ -42,14 +38,9 @@ set(PROJECT_SOURCES
         src/aboutdialog.hpp
         src/aboutdialog.cpp
         src/aboutdialog.ui
-        # Shortcut manager
-        src/fcmdshortcutmanager.hpp
-        src/fcmdshortcutmanager.cpp
         # Model
         src/model/filesystem.hpp
         src/model/filesystem.cpp
-        src/model/keyboardshortcuts.hpp
-        src/model/keyboardshortcuts.cpp
         # Utils
         src/utils/container.hpp
         src/utils/container.cpp

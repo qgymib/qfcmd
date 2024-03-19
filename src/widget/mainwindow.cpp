@@ -15,10 +15,8 @@
 #include "mainwindow.hpp"
 #include "aboutdialog.hpp"
 #include "perferencesdialog.hpp"
-#include "keyboardshortcutsform.hpp"
 #include "fstabwidget.hpp"
 #include "fstreeview.hpp"
-#include "fcmdshortcutmanager.hpp"
 #include "settings.hpp"
 
 namespace qfcmd {
@@ -50,16 +48,15 @@ struct MainWindowInner
     QShortcut*              scGoForward;
 
     QSettings*              settings;
-    FcmdShortCutManager*    shortcut_mgr;
 };
 } /* namespace qfcmd */
 
 static void _mainwindow_setupActions(qfcmd::MainWindowInner* inner)
 {
 	/* Register all known actions. */
-	inner->shortcut_mgr->regAction(inner->actionPerferences, inner->parent, &qfcmd::MainWindow::actionPerferences);
-	inner->shortcut_mgr->regAction(inner->actionShowToolbar, inner->parent, &qfcmd::MainWindow::actionShowToolbarChange);
-	inner->shortcut_mgr->regAction(inner->actionAbout, inner->parent, &qfcmd::MainWindow::actionAboutDialog);
+    inner->parent->connect(inner->actionPerferences, &QAction::triggered, inner->parent, &qfcmd::MainWindow::actionPerferences);
+    inner->parent->connect(inner->actionShowToolbar, &QAction::triggered, inner->parent, &qfcmd::MainWindow::actionShowToolbarChange);
+    inner->parent->connect(inner->actionAbout, &QAction::triggered, inner->parent, &qfcmd::MainWindow::actionAboutDialog);
 }
 
 /**
@@ -165,13 +162,11 @@ qfcmd::MainWindowInner::MainWindowInner(MainWindow* parent)
                                 parent);
 
     settings = new QSettings;
-    shortcut_mgr = new FcmdShortCutManager(parent);
 }
 
 qfcmd::MainWindowInner::~MainWindowInner()
 {
     delete settings;
-    delete shortcut_mgr;
 }
 
 qfcmd::MainWindow::MainWindow(QWidget *parent)
@@ -224,9 +219,6 @@ void qfcmd::MainWindow::actionShowToolbarChange()
 void qfcmd::MainWindow::actionPerferences()
 {
     PerferencesDialog dialog(this);
-
-    dialog.addConfigWidget(new KeyboardShortcutsForm(m_inner->shortcut_mgr->getShortcutMap()));
-
     dialog.exec();
 }
 

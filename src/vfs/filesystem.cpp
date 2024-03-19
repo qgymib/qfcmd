@@ -96,15 +96,15 @@ int qfcmd::FileSystem::open(uintptr_t* fh, const QUrl& url, uint64_t flags)
     return fs->open(fs, fh, c_path.data(), flags);
 }
 
-void qfcmd::FileSystem::close(uintptr_t fh)
+int qfcmd::FileSystem::close(uintptr_t fh)
 {
     qfcmd_filesystem_t* fs = m_inner->fs;
     if (fs == nullptr || fs->close == nullptr)
     {
-        return;
+        return -ENOSYS;
     }
 
-    fs->close(fs, fh);
+    return fs->close(fs, fh);
 }
 
 int qfcmd::FileSystem::read(uintptr_t fh, void* buf, size_t size)

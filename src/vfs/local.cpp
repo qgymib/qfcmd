@@ -129,11 +129,12 @@ int qfcmd::LocalFS::open(uintptr_t* fh, const QUrl& url, uint64_t flags)
     return 0;
 }
 
-void qfcmd::LocalFS::close(uintptr_t fh)
+int qfcmd::LocalFS::close(uintptr_t fh)
 {
     QFile* file = reinterpret_cast<QFile*>(fh);
     file->close();
     delete file;
+    return 0;
 }
 
 int qfcmd::LocalFS::read(uintptr_t fh, void* buf, size_t size)

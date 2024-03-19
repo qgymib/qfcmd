@@ -15,8 +15,11 @@ namespace qfcmd {
  * will be used to open the file. The scheme `file` is always reserved for local
  * file system.
  */
-class VFS
+class VFS : public FileSystem
 {
+    Q_OBJECT
+    Q_DISABLE_COPY_MOVE(VFS)
+
 public:
     static void init();
     static void exit();
@@ -56,13 +59,16 @@ public:
     static int unmount(const QUrl& path);
 
 public:
-    /**
-     * @brief Get file system.
-     * @param[in] path - URL of file system.
-     * @param[out] fs - File system.
-     * @return 0 on success, or -errno on error.
-     */
-    static FileSystem::FsPtr accessfs(const QUrl& path);
+    VFS(QObject* parent = nullptr);
+    virtual ~VFS();
+
+public:
+    virtual int ls(const QUrl &url, FileInfoEntry *entry) override;
+    virtual int stat(const QUrl &url, qfcmd_fs_stat_t *stat) override;
+    virtual int open(uintptr_t *fh, const QUrl &url, uint64_t flags) override;
+    virtual int close(uintptr_t fh) override;
+    virtual int read(uintptr_t fh, void *buf, size_t size) override;
+    virtual int write(uintptr_t fh, const void *buf, size_t size) override;
 };
 
 } /* namespace qfcmd */

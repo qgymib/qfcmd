@@ -74,8 +74,9 @@ public:
     /**
      * @brief Close file.
      * @param[in] fh - File handle.
+     * @return 0 on success, or -errno on error.
      */
-    virtual void close(uintptr_t fh);
+    virtual int close(uintptr_t fh);
 
     /**
      * @brief Read data from file.

@@ -89,8 +89,9 @@ typedef struct qfcmd_filesystem
      * @brief (Optional) Close file.
      * @param[in] thiz - This object.
      * @param[in] fh - File handle.
+     * @return 0 on success, or -errno on error.
      */
-    void (*close)(struct qfcmd_filesystem* thiz, uintptr_t fh);
+    int (*close)(struct qfcmd_filesystem* thiz, uintptr_t fh);
 
     /**
      * @brief (Optional) Read data from file.

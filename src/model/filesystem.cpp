@@ -258,10 +258,10 @@ qfcmd::FileSystemModelNode::~FileSystemModelNode()
 
 void qfcmd::FileSystemModelWorker::doFetch(const QUrl &url)
 {
-    FileSystem::FsPtr fs = VFS::accessfs(url);
+    VFS fs;
 
     FileSystem::FileInfoEntry entry;
-    int ret = fs->ls(url, &entry);
+    int ret = fs.ls(url, &entry);
 
     FileInfoMap records;
     for (auto it = entry.begin(); it != entry.end(); it++)
@@ -281,7 +281,6 @@ void qfcmd::FileSystemModelWorker::doFetch(const QUrl &url)
 
 qfcmd::FileSystemModelNode* qfcmd::FileSystemModel::getNode(const QUrl &url)
 {
-    FileSystem::FsPtr fs = VFS::accessfs(url);
     const QStringList paths = _fs_model_split_path(url);
 
     qfcmd::FileSystemModelNode* schemeNode = _fs_model_get_scheme_node(this, url);

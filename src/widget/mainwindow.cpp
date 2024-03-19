@@ -46,8 +46,6 @@ struct MainWindowInner
     QShortcut*              scDuplicateTab;
     QShortcut*              scGoBack;
     QShortcut*              scGoForward;
-
-    QSettings*              settings;
 };
 } /* namespace qfcmd */
 
@@ -160,13 +158,10 @@ qfcmd::MainWindowInner::MainWindowInner(MainWindow* parent)
                              parent);
     scGoForward = new QShortcut(qfcmd::Settings::get<QKeySequence>(qfcmd::Settings::SHORTCUT_GO_FORWARD),
                                 parent);
-
-    settings = new QSettings;
 }
 
 qfcmd::MainWindowInner::~MainWindowInner()
 {
-    delete settings;
 }
 
 qfcmd::MainWindow::MainWindow(QWidget *parent)
@@ -186,7 +181,7 @@ qfcmd::MainWindow::MainWindow(QWidget *parent)
     }
 
     {
-        bool visible = m_inner->settings->value("view/ShowToolbar", true).toBool();
+        bool visible = qfcmd::Settings::get<bool>(qfcmd::Settings::VIEW_SHOW_TOOLBAR);
         m_inner->toolBar->setVisible(visible);
         m_inner->actionShowToolbar->setChecked(visible);
     }
@@ -210,7 +205,7 @@ void qfcmd::MainWindow::actionShowToolbarChange()
 {
     bool need_visible = !m_inner->toolBar->isVisible();
 
-    m_inner->settings->setValue("view/ShowToolbar", need_visible);
+    qfcmd::Settings::set(qfcmd::Settings::VIEW_SHOW_TOOLBAR, need_visible);
 
     m_inner->actionShowToolbar->setChecked(need_visible);
     m_inner->toolBar->setVisible(need_visible);

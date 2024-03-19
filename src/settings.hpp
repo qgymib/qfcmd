@@ -14,6 +14,7 @@
  * + The default value of the setting.
  */
 #define QFCMD_SETTINGS_TABLE(xx)  \
+    xx(VIEW_SHOW_TOOLBAR,       "View/ShowToolBar",         true)                                   \
     xx(SHORTCUT_CLOSE_TAB,      "Shortcuts/CloseTab",       QKeySequence(Qt::CTRL | Qt::Key_W))     \
     xx(SHORTCUT_DUPLICATE_TAB,  "Shortcuts/DuplicateTab",   QKeySequence(Qt::CTRL | Qt::Key_T))     \
     xx(SHORTCUT_GO_BACK,        "Shortcuts/GoBack",         QKeySequence(Qt::ALT | Qt::Key_Left))   \

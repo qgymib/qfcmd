@@ -24,38 +24,47 @@ struct VfsRouterSession
 typedef QSharedPointer<VfsRouterSession> VfsRouterSessionPtr;
 typedef QMap<uintptr_t, VfsRouterSessionPtr> VfsRouterSessionMap;
 
-class VfsRouterInner : public FileSystem
+class VfsRouterFS : public FileSystem
 {
 public:
-    VfsRouterInner(VfsRouter* parent);
-    ~VfsRouterInner();
+    VfsRouterFS();
+    ~VfsRouterFS();
 
 public:
     virtual int open(uintptr_t* fh, const QUrl& url, uint64_t flags) override;
     virtual int close(uintptr_t fh) override;
     virtual int read(uintptr_t fh, void* buf, size_t bufsz) override;
-    virtual int write(uintptr_t fh, const void *buf, size_t bufsz) override;
+    virtual int write(uintptr_t fh, const void* buf, size_t bufsz) override;
 
 public:
-    VfsRouter*                  m_parent;
     QAtomicInteger<uintptr_t>   m_fhCnt;
-
     VfsRouterMap                m_routeMap;
     VfsRouterSessionMap         m_sessionMap;
 };
 
+class VfsRouterInner
+{
+public:
+    VfsRouterInner();
+    ~VfsRouterInner();
+
+public:
+    QSharedPointer<VfsRouterFS> fs;
+};
+
 } /* namespace qfcmd */
 
-static int _vfs_router_open(qfcmd::VfsRouterInner* inner,
+static int _vfs_router_open(qfcmd::VfsRouterFS* fs,
                             uintptr_t* fh,
                             const qfcmd::VfsRouter::RouterCB& cb,
                             uint64_t flags)
 {
-    qfcmd::VfsRouterSessionPtr session(new qfcmd::VfsRouterSession(inner->m_fhCnt++, flags));
+    *fh = fs->m_fhCnt++;
+
+    qfcmd::VfsRouterSessionPtr session(new qfcmd::VfsRouterSession(*fh, flags));
     session->cb = cb;
 
-    *fh = session->fh;
-    inner->m_sessionMap.insert(session->fh, session);
+    fs->m_sessionMap.insert(session->fh, session);
 
     return 0;
 }
@@ -66,17 +75,16 @@ qfcmd::VfsRouterSession::VfsRouterSession(uintptr_t fh, uint64_t flags)
     this->flags = flags;
 }
 
-qfcmd::VfsRouterInner::VfsRouterInner(VfsRouter* parent)
+qfcmd::VfsRouterFS::VfsRouterFS()
 {
-    m_parent = parent;
     m_fhCnt = 0;
 }
 
-qfcmd::VfsRouterInner::~VfsRouterInner()
+qfcmd::VfsRouterFS::~VfsRouterFS()
 {
 }
 
-int qfcmd::VfsRouterInner::open(uintptr_t *fh, const QUrl &url, uint64_t flags)
+int qfcmd::VfsRouterFS::open(uintptr_t *fh, const QUrl &url, uint64_t flags)
 {
     const QString path = url.path();
 
@@ -99,7 +107,7 @@ int qfcmd::VfsRouterInner::open(uintptr_t *fh, const QUrl &url, uint64_t flags)
     return -ENOENT;
 }
 
-int qfcmd::VfsRouterInner::close(uintptr_t fh)
+int qfcmd::VfsRouterFS::close(uintptr_t fh)
 {
     auto it = m_sessionMap.find(fh);
     if (it == m_sessionMap.end())
@@ -111,7 +119,7 @@ int qfcmd::VfsRouterInner::close(uintptr_t fh)
     return 0;
 }
 
-int qfcmd::VfsRouterInner::read(uintptr_t fh, void* buf, size_t bufsz)
+int qfcmd::VfsRouterFS::read(uintptr_t fh, void* buf, size_t bufsz)
 {
     auto it = m_sessionMap.find(fh);
     if (it == m_sessionMap.end())
@@ -134,7 +142,7 @@ int qfcmd::VfsRouterInner::read(uintptr_t fh, void* buf, size_t bufsz)
     return copy_sz;
 }
 
-int qfcmd::VfsRouterInner::write(uintptr_t fh, const void* buf, size_t bufsz)
+int qfcmd::VfsRouterFS::write(uintptr_t fh, const void* buf, size_t bufsz)
 {
     auto it = m_sessionMap.find(fh);
     if (it == m_sessionMap.end())
@@ -164,9 +172,18 @@ int qfcmd::VfsRouterInner::write(uintptr_t fh, const void* buf, size_t bufsz)
     return bufsz;
 }
 
+qfcmd::VfsRouterInner::VfsRouterInner()
+{
+    this->fs = QSharedPointer<VfsRouterFS>(new VfsRouterFS);
+}
+
+qfcmd::VfsRouterInner::~VfsRouterInner()
+{
+}
+
 qfcmd::VfsRouter::VfsRouter()
 {
-    m_inner = new VfsRouterInner(this);
+    m_inner = new VfsRouterInner();
 }
 
 qfcmd::VfsRouter::~VfsRouter()
@@ -176,5 +193,5 @@ qfcmd::VfsRouter::~VfsRouter()
 
 void qfcmd::VfsRouter::route(const QString& path, RouterCB cb)
 {
-    m_inner->m_routeMap.insert(path, cb);
+    m_inner->fs->m_routeMap.insert(path, cb);
 }

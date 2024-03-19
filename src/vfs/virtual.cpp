@@ -1,5 +1,6 @@
 #include <QAtomicInteger>
 #include <QByteArray>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QMap>
 #include <QSharedPointer>
@@ -63,6 +64,25 @@ static int _vfs_mount(const QUrl& url, qfcmd::FileSystem::FsPtr& fs)
     return 0;
 }
 
+static QJsonObject _vfs_virtualfs_list(const QJsonObject& msg)
+{
+    (void)msg;
+
+    QJsonObject ret;
+    QJsonArray arr;
+
+    auto it = s_vfsi->m_routeMap.begin();
+    for (; it != s_vfsi->m_routeMap.end(); it++)
+    {
+        QJsonObject obj;
+        obj["path"] = it.key();
+        arr.append(obj);
+    }
+
+    ret["result"] = arr;
+    return ret;
+}
+
 qfcmd::VfsRouterSession::VfsRouterSession(uintptr_t fh, uint64_t flags)
 {
     this->fh = fh;
@@ -97,6 +117,8 @@ void qfcmd::VirtualFS::init()
 
     VFS::registerVFS("qfcmd", _vfs_mount);
     VFS::mount(QUrl("qfcmd:///"), QUrl("qfcmd:///"));
+
+    route("/vfs/list", _vfs_virtualfs_list);
 }
 
 void qfcmd::VirtualFS::exit()
@@ -118,8 +140,12 @@ void qfcmd::VirtualFS::route(const QString &path, RouterCB cb)
 QJsonObject qfcmd::VirtualFS::exchange(const QUrl &url, const QJsonObject &msg)
 {
     char buffer[1024];
-    QJsonDocument writeDoc(msg);
-    QByteArray cache = writeDoc.toJson();
+
+    QByteArray cache = QJsonDocument(msg).toJson();
+    if (msg.isEmpty())
+    {
+        cache.assign("{}");
+    }
 
     File file;
     QJsonObject result;

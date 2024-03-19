@@ -55,8 +55,6 @@ set(PROJECT_SOURCES
         src/utils/container.cpp
         src/utils/log.hpp
         src/utils/log.cpp
-        src/utils/vfsrouter.hpp
-        src/utils/vfsrouter.cpp
         src/utils/win32.hpp
         src/utils/win32.cpp
         # Settings
@@ -69,6 +67,8 @@ set(PROJECT_SOURCES
         src/vfs/local.cpp
         src/vfs/vfs.hpp
         src/vfs/vfs.cpp
+        src/vfs/virtual.hpp
+        src/vfs/virtual.cpp
         # Resources
         res/app.qrc
         res/app.rc
@@ -80,6 +80,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(qfcmd
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
+        src/vfs/virtual.hpp src/vfs/virtual.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET qfcmd APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

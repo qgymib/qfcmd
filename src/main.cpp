@@ -11,6 +11,7 @@
 
 #include "qfcmd/qfcmd.h"
 #include "vfs/vfs.hpp"
+#include "vfs/virtual.hpp"
 #include "widget/mainwindow.hpp"
 #include "utils/log.hpp"
 #include "settings.hpp"
@@ -80,6 +81,7 @@ static void _setup_app(QApplication& a)
     qfcmd::Log::init(logfile);
     qfcmd::Settings::init();
     qfcmd::VFS::init();
+    qfcmd::VirtualFS::init();
 }
 
 /**
@@ -87,6 +89,7 @@ static void _setup_app(QApplication& a)
  */
 static void _at_exit()
 {
+    qfcmd::VirtualFS::exit();
     qfcmd::VFS::exit();
     qfcmd::Settings::exit();
     qfcmd::Log::exit();

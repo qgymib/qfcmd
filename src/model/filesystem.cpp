@@ -1,7 +1,7 @@
 #include <QApplication>
 #include <QImageReader>
 
-#include "vfs/vfs.hpp"
+#include "vfs/file.hpp"
 #include "filesystem.hpp"
 
 static qfcmd::FileSystemModelNode* _fs_mode_index_to_node(const QModelIndex& index)
@@ -258,10 +258,8 @@ qfcmd::FileSystemModelNode::~FileSystemModelNode()
 
 void qfcmd::FileSystemModelWorker::doFetch(const QUrl &url)
 {
-    VFS fs;
-
     FileSystem::FileInfoEntry entry;
-    int ret = fs.ls(url, &entry);
+    int ret = File::ls(url, &entry);
 
     FileInfoMap records;
     for (auto it = entry.begin(); it != entry.end(); it++)

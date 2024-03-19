@@ -20,20 +20,6 @@ typedef QMap<QString, FileSystem::MountFn> VfsProviderMap;
  */
 typedef QMap<QString, FileSystem::FsPtr> VfsMountMaps;
 
-struct VfsFileHandle
-{
-    VfsFileHandle()
-    {
-        this->wrap = 0;
-        this->real = 0;
-    }
-    uintptr_t           wrap;
-    uintptr_t           real;
-    FileSystem::FsPtr   fs;
-};
-
-typedef QMap<uintptr_t, VfsFileHandle> VfsFileHandleMap;
-
 struct VfsInner
 {
     VfsInner();
@@ -53,13 +39,6 @@ struct VfsInner
      * The access to `file///foo/bar/1` should return index 2.
      */
     VfsMountMaps        mountMap;
-
-    /**
-     * @brief Record all open file handle.
-     */
-    VfsFileHandleMap    fhMap;
-
-    uintptr_t           fhCnt;
 };
 
 } /* namespace qfcmd */
@@ -154,17 +133,21 @@ static QUrl _vfs_get_relative_url(const QUrl& url, const QUrl& mount)
     return urlCopy;
 }
 
-static qfcmd::FileSystem::FsPtr _vfs_op(const QUrl& url, QUrl& relative)
+qfcmd::FileSystem::FsPtr qfcmd::VFS::accessfs(const QUrl& url, QUrl* relative)
 {
     QUrl mount_point;
     qfcmd::FileSystem::FsPtr fs = _vfs_accessfs(url, &mount_point);
-    relative = _vfs_get_relative_url(url, mount_point);
+
+    if (relative != nullptr)
+    {
+        *relative = _vfs_get_relative_url(url, mount_point);
+    }
+
     return fs;
 }
 
 qfcmd::VfsInner::VfsInner()
 {
-    this->fhCnt = 0;
 }
 
 qfcmd::VfsInner::~VfsInner()
@@ -240,84 +223,4 @@ int qfcmd::VFS::unmount(const QUrl& path)
 
     s_vfs->mountMap.erase(it);
     return 0;
-}
-
-qfcmd::VFS::VFS(QObject* parent)
-    : FileSystem(parent)
-{
-}
-
-qfcmd::VFS::~VFS()
-{
-}
-
-int qfcmd::VFS::ls(const QUrl &url, FileInfoEntry *entry)
-{
-    QUrl relative_path;
-    FileSystem::FsPtr fs = _vfs_op(url, relative_path);
-    return fs->ls(relative_path, entry);
-}
-
-int qfcmd::VFS::stat(const QUrl &url, qfcmd_fs_stat_t *stat)
-{
-    QUrl relative_path;
-    FileSystem::FsPtr fs = _vfs_op(url, relative_path);
-    return fs->stat(relative_path, stat);
-}
-
-int qfcmd::VFS::open(uintptr_t *fh, const QUrl &url, uint64_t flags)
-{
-    QUrl relative_path;
-    qfcmd::VfsFileHandle handle;
-    handle.fs = _vfs_op(url, relative_path);
-
-    int ret;
-    if ((ret = handle.fs->open(&handle.real, relative_path, flags)) < 0)
-    {
-        return ret;
-    }
-    handle.wrap = s_vfs->fhCnt++;
-
-    s_vfs->fhMap.insert(handle.wrap, handle);
-    *fh = handle.wrap;
-
-    return 0;
-}
-
-int qfcmd::VFS::close(uintptr_t fh)
-{
-    auto it = s_vfs->fhMap.find(fh);
-    if (it == s_vfs->fhMap.end())
-    {
-        return -ENOENT;
-    }
-
-    qfcmd::VfsFileHandle handle = it.value();
-    s_vfs->fhMap.erase(it);
-
-    return handle.fs->close(handle.real);
-}
-
-int qfcmd::VFS::read(uintptr_t fh, void *buf, size_t size)
-{
-    auto it = s_vfs->fhMap.find(fh);
-    if (it == s_vfs->fhMap.end())
-    {
-        return -ENOENT;
-    }
-
-    qfcmd::VfsFileHandle handle = it.value();
-    return handle.fs->read(handle.real, buf, size);
-}
-
-int qfcmd::VFS::write(uintptr_t fh, const void *buf, size_t size)
-{
-    auto it = s_vfs->fhMap.find(fh);
-    if (it == s_vfs->fhMap.end())
-    {
-        return -ENOENT;
-    }
-
-    qfcmd::VfsFileHandle handle = it.value();
-    return handle.fs->write(handle.real, buf, size);
 }

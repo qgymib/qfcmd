@@ -61,6 +61,8 @@ set(PROJECT_SOURCES
         src/settings.hpp
         src/settings.cpp
         # VFS
+        src/vfs/file.hpp
+        src/vfs/file.cpp
         src/vfs/filesystem.hpp
         src/vfs/filesystem.cpp
         src/vfs/local.hpp

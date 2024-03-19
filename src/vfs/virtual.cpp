@@ -6,6 +6,7 @@
 
 #include "virtual.hpp"
 #include "vfs.hpp"
+#include "file.hpp"
 
 namespace qfcmd {
 
@@ -120,11 +121,10 @@ QJsonObject qfcmd::VirtualFS::exchange(const QUrl &url, const QJsonObject &msg)
     QJsonDocument writeDoc(msg);
     QByteArray cache = writeDoc.toJson();
 
-    VFS vfs;
+    File file;
     QJsonObject result;
 
-    uintptr_t fh = 0;
-    int ret = vfs.open(&fh, url, QFCMD_FS_O_RDWR);
+    int ret = file.open(url, QFCMD_FS_O_RDWR);
     if (ret != 0)
     {
         result["error"] = ret;
@@ -133,29 +133,20 @@ QJsonObject qfcmd::VirtualFS::exchange(const QUrl &url, const QJsonObject &msg)
 
     const char* data = cache.data();
     qsizetype data_sz = cache.size();
-    vfs.write(fh, static_cast<const void*>(data), data_sz);
+    file.write(static_cast<const void*>(data), data_sz);
 
     cache.clear();
 
     int read_size;
-    while ((read_size = vfs.read(fh, buffer, sizeof(buffer))) > 0)
+    while ((read_size = file.read(buffer, sizeof(buffer))) > 0)
     {
         cache.append(buffer, read_size);
     }
 
     QJsonDocument rspDoc = QJsonDocument::fromJson(cache);
-    if (rspDoc.isNull())
-    {
-        result["error"] = -ENOENT;
-    }
-    else
-    {
-        result = rspDoc.object();
-    }
+    Q_ASSERT(!rspDoc.isNull());
 
-    vfs.close(fh);
-
-    return result;
+    return rspDoc.object();
 }
 
 int qfcmd::VirtualFS::open(uintptr_t *fh, const QUrl &url, uint64_t flags)

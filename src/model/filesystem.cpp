@@ -259,7 +259,7 @@ qfcmd::FileSystemModelNode::~FileSystemModelNode()
 void qfcmd::FileSystemModelWorker::doFetch(const QUrl &url)
 {
     FileSystem::FileInfoEntry entry;
-    int ret = File::ls(url, &entry);
+    int ret = VFile::ls(url, &entry);
 
     FileInfoMap records;
     for (auto it = entry.begin(); it != entry.end(); it++)

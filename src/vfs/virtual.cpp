@@ -139,35 +139,28 @@ void qfcmd::VirtualFS::route(const QString &path, RouterCB cb)
 
 QJsonObject qfcmd::VirtualFS::exchange(const QUrl &url, const QJsonObject &msg)
 {
-    char buffer[1024];
+    int ret;
+    VFile file;
+    QJsonObject result;
+    QByteArray cache;
 
-    QByteArray cache = QJsonDocument(msg).toJson();
     if (msg.isEmpty())
     {
-        cache.assign("{}");
+        goto read_data;
     }
+    cache = QJsonDocument(msg).toJson();
 
-    File file;
-    QJsonObject result;
-
-    int ret = file.open(url, QFCMD_FS_O_RDWR);
-    if (ret != 0)
+    if ((ret = file.open(url, QFCMD_FS_O_RDWR)) != 0)
     {
         result["error"] = ret;
         return result;
     }
 
-    const char* data = cache.data();
-    qsizetype data_sz = cache.size();
-    file.write(static_cast<const void*>(data), data_sz);
+    file.write(cache);
 
+read_data:
     cache.clear();
-
-    int read_size;
-    while ((read_size = file.read(buffer, sizeof(buffer))) > 0)
-    {
-        cache.append(buffer, read_size);
-    }
+    file.read(cache);
 
     QJsonDocument rspDoc = QJsonDocument::fromJson(cache);
     Q_ASSERT(!rspDoc.isNull());

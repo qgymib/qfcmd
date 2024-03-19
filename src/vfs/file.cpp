@@ -3,11 +3,11 @@
 
 namespace qfcmd {
 
-class FileInner
+class VFileInner
 {
 public:
-    FileInner(const QUrl& url, uint64_t flags);
-    ~FileInner();
+    VFileInner(const QUrl& url, uint64_t flags);
+    ~VFileInner();
 
 public:
     uintptr_t           m_fh;
@@ -22,7 +22,7 @@ public:
 
 } /* namespace qfcmd */
 
-qfcmd::FileInner::FileInner(const QUrl& url, uint64_t flags)
+qfcmd::VFileInner::VFileInner(const QUrl& url, uint64_t flags)
 {
     m_fh = 0;
     m_flags = flags;
@@ -44,7 +44,7 @@ qfcmd::FileInner::FileInner(const QUrl& url, uint64_t flags)
     m_opened = true;
 }
 
-qfcmd::FileInner::~FileInner()
+qfcmd::VFileInner::~VFileInner()
 {
     if (m_opened)
     {
@@ -53,32 +53,32 @@ qfcmd::FileInner::~FileInner()
     }
 }
 
-qfcmd::File::File(QObject* parent)
+qfcmd::VFile::VFile(QObject* parent)
     : QObject(parent)
 {
     m_inner = nullptr;
 }
 
-qfcmd::File::~File()
+qfcmd::VFile::~VFile()
 {
     close();
 }
 
-int qfcmd::File::ls(const QUrl &url, FileSystem::FileInfoEntry *entry)
+int qfcmd::VFile::ls(const QUrl &url, FileSystem::FileInfoEntry *entry)
 {
     QUrl relative_path;
     FileSystem::FsPtr fs = VFS::accessfs(url, &relative_path);
     return fs->ls(relative_path, entry);
 }
 
-int qfcmd::File::stat(const QUrl &url, qfcmd_fs_stat_t *stat)
+int qfcmd::VFile::stat(const QUrl &url, qfcmd_fs_stat_t *stat)
 {
     QUrl relative_path;
     FileSystem::FsPtr fs = VFS::accessfs(url, &relative_path);
     return fs->stat(relative_path, stat);
 }
 
-int qfcmd::File::open(const QUrl& url, uint64_t flags)
+int qfcmd::VFile::open(const QUrl& url, uint64_t flags)
 {
     int ret;
     if (m_inner != nullptr)
@@ -86,19 +86,20 @@ int qfcmd::File::open(const QUrl& url, uint64_t flags)
         return -EALREADY;
     }
 
-    m_inner = new FileInner(url, flags);
-    if (!m_inner->m_opened)
+    m_inner = new VFileInner(url, flags);
+    if (m_inner->m_opened)
     {
-        ret = m_inner->m_error;
-        delete m_inner;
-        m_inner = nullptr;
-        return ret;
+        return 0;
     }
 
-    return 0;
+    ret = m_inner->m_error;
+    delete m_inner;
+    m_inner = nullptr;
+
+    return ret;
 }
 
-void qfcmd::File::close()
+void qfcmd::VFile::close()
 {
     if (m_inner == nullptr)
     {
@@ -109,7 +110,7 @@ void qfcmd::File::close()
     m_inner = nullptr;
 }
 
-int qfcmd::File::read(void* buf, size_t size)
+int qfcmd::VFile::read(void* buf, size_t size)
 {
     if (m_inner == nullptr)
     {
@@ -119,7 +120,27 @@ int qfcmd::File::read(void* buf, size_t size)
     return m_inner->m_fs->read(m_inner->m_fh, buf, size);
 }
 
-int qfcmd::File::write(const void* buf, size_t size)
+int qfcmd::VFile::read(QByteArray& data)
+{
+    int read_sz = 0;
+    char buf[1024];
+
+    int ret;
+    while ((ret = read(buf, sizeof(buf))) > 0)
+    {
+        data.append(buf, ret);
+        read_sz += ret;
+    }
+
+    if (ret < 0)
+    {
+        return ret;
+    }
+
+    return read_sz;
+}
+
+int qfcmd::VFile::write(const void* buf, size_t size)
 {
     if (m_inner == nullptr)
     {
@@ -127,4 +148,11 @@ int qfcmd::File::write(const void* buf, size_t size)
     }
 
     return m_inner->m_fs->write(m_inner->m_fh, buf, size);
+}
+
+int qfcmd::VFile::write(const QByteArray& data)
+{
+    const char* buf = data.data();
+    size_t size = data.size();
+    return write(buf, size);
 }

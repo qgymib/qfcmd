@@ -21,19 +21,18 @@ set(PROJECT_SOURCES
         include/qfcmd/filesystem.h
         # Entrypoint
         src/main.cpp
-        # PerferencesDialog
-        src/perferencesdialog.hpp
-        src/perferencesdialog.cpp
-        src/perferencesdialog.ui
         # Widgets
-        src/widget/mainwindow.cpp
-        src/widget/mainwindow.hpp
         src/widget/fsfoldertab.hpp
         src/widget/fsfoldertab.cpp
         src/widget/fstabwidget.hpp
         src/widget/fstabwidget.cpp
         src/widget/fstreeview.hpp
         src/widget/fstreeview.cpp
+        src/widget/mainwindow.cpp
+        src/widget/mainwindow.hpp
+        src/widget/perferencesdialog.hpp
+        src/widget/perferencesdialog.cpp
+        src/widget/perferencesdialog.ui
         # About dialog
         src/aboutdialog.hpp
         src/aboutdialog.cpp

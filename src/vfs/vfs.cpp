@@ -1,7 +1,7 @@
 #include <QMap>
-#include <QWriteLocker>
-#include <QReadWriteLock>
 #include <QReadLocker>
+#include <QReadWriteLock>
+#include <QWriteLocker>
 
 #include "filesystem.hpp"
 #include "vfs.hpp"

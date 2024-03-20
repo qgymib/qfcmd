@@ -3,7 +3,10 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QMap>
+#include <QReadLocker>
+#include <QReadWriteLock>
 #include <QSharedPointer>
+#include <QWriteLocker>
 
 #include "virtual.hpp"
 #include "vfs.hpp"
@@ -53,8 +56,12 @@ public:
 
 public:
     QAtomicInteger<uintptr_t>   m_fhCnt;
+
     VfsRouterMap                m_routeMap;
+    QReadWriteLock              m_routeMapLock;
+
     VfsRouterSessionMap         m_sessionMap;
+    QReadWriteLock              m_sessionMapLock;
 };
 
 } /* namespace qfcmd */
@@ -71,7 +78,10 @@ static int _vfs_router_open(uintptr_t* fh,
     session->rec = rec;
     session->rec.flags = flags;
 
-    s_vfs_ctx->m_sessionMap.insert(session->fh, session);
+    {
+        QWriteLocker wlock(&s_vfs_ctx->m_sessionMapLock);
+        s_vfs_ctx->m_sessionMap.insert(session->fh, session);
+    }
 
     return 0;
 }
@@ -86,19 +96,31 @@ static QJsonObject _virtualfs_list(const QJsonObject& msg)
 {
     (void)msg;
 
-    QJsonObject ret;
     QJsonArray arr;
 
-    auto it = s_vfs_ctx->m_routeMap.begin();
-    for (; it != s_vfs_ctx->m_routeMap.end(); it++)
     {
-        arr.append(it.key());
+        QReadLocker rlock(&s_vfs_ctx->m_routeMapLock);
+        auto it = s_vfs_ctx->m_routeMap.begin();
+        for (; it != s_vfs_ctx->m_routeMap.end(); it++)
+        {
+            arr.append(it.key());
+        }
     }
 
+    QJsonObject ret;
     ret["result"] = arr;
     return ret;
 }
 
+/**
+ * @brief Reads data from a virtual file system session and copies it into the
+ *   provided buffer.
+ * @param[in] session - The virtual file system session to read from
+ * @param[out] buf - Pointer to the buffer where the data will be copied
+ * @param[in] bufsz - The size of the buffer
+ * @return The number of bytes copied into the buffer
+ * @throws None
+ */
 static int _virtual_fs_read_once(qfcmd::VfsRouterSessionPtr session, void* buf, size_t bufsz)
 {
     if (!session->readed)
@@ -188,7 +210,11 @@ void qfcmd::VirtualFS::route(const QUrl& url, uint64_t flags, RouterCB cb)
     VfsRouterRecord rec;
     rec.cb = cb;
     rec.flags = flags;
-    s_vfs_ctx->m_routeMap.insert(path, rec);
+
+    {
+        QWriteLocker wlock(&s_vfs_ctx->m_routeMapLock);
+        s_vfs_ctx->m_routeMap.insert(path, rec);
+    }
 }
 
 QJsonObject qfcmd::VirtualFS::exchange(const QUrl &url, uint64_t flags, const QJsonObject &msg)
@@ -227,12 +253,17 @@ int qfcmd::VirtualFS::open(uintptr_t *fh, const QUrl &url, uint64_t flags)
     flags &= QFCMD_FS_O_RDWR;
 
     const QString path = m_inner->m_url.toString();
-    auto it = s_vfs_ctx->m_routeMap.find(path);
-    if (it == s_vfs_ctx->m_routeMap.end())
+    VfsRouterRecord record;
+
     {
-        return -ENOENT;
+        QReadLocker rlock(&s_vfs_ctx->m_routeMapLock);
+        auto it = s_vfs_ctx->m_routeMap.find(path);
+        if (it == s_vfs_ctx->m_routeMap.end())
+        {
+            return -ENOENT;
+        }
+        record = it.value();
     }
-    VfsRouterRecord record = it.value();
 
     /*
      * The provider and the consumer must share compatible flags:
@@ -251,6 +282,8 @@ int qfcmd::VirtualFS::open(uintptr_t *fh, const QUrl &url, uint64_t flags)
 
 int qfcmd::VirtualFS::close(uintptr_t fh)
 {
+    QWriteLocker wlock(&s_vfs_ctx->m_sessionMapLock);
+
     auto it = s_vfs_ctx->m_sessionMap.find(fh);
     if (it == s_vfs_ctx->m_sessionMap.end())
     {
@@ -263,12 +296,16 @@ int qfcmd::VirtualFS::close(uintptr_t fh)
 
 int qfcmd::VirtualFS::read(uintptr_t fh, void *buf, size_t bufsz)
 {
-    auto it = s_vfs_ctx->m_sessionMap.find(fh);
-    if (it == s_vfs_ctx->m_sessionMap.end())
+    VfsRouterSessionPtr session;
     {
-        return -EINVAL;
+        QReadLocker rlock(&s_vfs_ctx->m_sessionMapLock);
+        auto it = s_vfs_ctx->m_sessionMap.find(fh);
+        if (it == s_vfs_ctx->m_sessionMap.end())
+        {
+            return -EINVAL;
+        }
+        session = it.value();
     }
-    VfsRouterSessionPtr session = it.value();
 
     /* This session is opend as read-only, just call route and read output */
     if (session->rec.flags == QFCMD_FS_O_RDONLY)
@@ -292,12 +329,17 @@ int qfcmd::VirtualFS::read(uintptr_t fh, void *buf, size_t bufsz)
 
 int qfcmd::VirtualFS::write(uintptr_t fh, const void *buf, size_t bufsz)
 {
-    auto it = s_vfs_ctx->m_sessionMap.find(fh);
-    if (it == s_vfs_ctx->m_sessionMap.end())
+    VfsRouterSessionPtr session;
     {
-        return -EINVAL;
+        QReadLocker rlock(&s_vfs_ctx->m_sessionMapLock);
+        auto it = s_vfs_ctx->m_sessionMap.find(fh);
+        if (it == s_vfs_ctx->m_sessionMap.end())
+        {
+            return -EINVAL;
+        }
+        session = it.value();
     }
-    VfsRouterSessionPtr session = it.value();
+
 
     /* This session is opend as write-only, no need to save response. */
     if (session->rec.flags == QFCMD_FS_O_WRONLY)

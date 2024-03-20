@@ -11,6 +11,16 @@
 
 namespace qfcmd {
 
+class VirtualFSInner
+{
+public:
+    VirtualFSInner(const QUrl& url);
+    ~VirtualFSInner();
+
+public:
+    QUrl    m_url;
+};
+
 typedef QMap<QString, VirtualFS::RouterCB> VfsRouterMap;
 
 struct VfsRouterSession
@@ -27,11 +37,11 @@ struct VfsRouterSession
 typedef QSharedPointer<VfsRouterSession> VfsRouterSessionPtr;
 typedef QMap<uintptr_t, VfsRouterSessionPtr> VfsRouterSessionMap;
 
-class VirtualFSInner
+class VirtualFSCtx
 {
 public:
-    VirtualFSInner();
-    ~VirtualFSInner();
+    VirtualFSCtx();
+    ~VirtualFSCtx();
 
 public:
     QAtomicInteger<uintptr_t>   m_fhCnt;
@@ -41,38 +51,37 @@ public:
 
 } /* namespace qfcmd */
 
-static qfcmd::VirtualFSInner* s_vfsi = nullptr;
+static qfcmd::VirtualFSCtx* s_vfs_ctx = nullptr;
 
 static int _vfs_router_open(uintptr_t* fh,
                             const qfcmd::VirtualFS::RouterCB& cb,
                             uint64_t flags)
 {
-    *fh = s_vfsi->m_fhCnt++;
+    *fh = s_vfs_ctx->m_fhCnt++;
 
     qfcmd::VfsRouterSessionPtr session(new qfcmd::VfsRouterSession(*fh, flags));
     session->cb = cb;
 
-    s_vfsi->m_sessionMap.insert(session->fh, session);
+    s_vfs_ctx->m_sessionMap.insert(session->fh, session);
 
     return 0;
 }
 
-static int _vfs_mount(const QUrl& url, qfcmd::FileSystem::FsPtr& fs)
+static int _virtual_fs_mount(const QUrl& url, qfcmd::FileSystem::FsPtr& fs)
 {
-    (void)url;
-    fs = qfcmd::FileSystem::FsPtr(new qfcmd::VirtualFS);
+    fs = qfcmd::FileSystem::FsPtr(new qfcmd::VirtualFS(url));
     return 0;
 }
 
-static QJsonObject _vfs_virtualfs_list(const QJsonObject& msg)
+static QJsonObject _virtualfs_list(const QJsonObject& msg)
 {
     (void)msg;
 
     QJsonObject ret;
     QJsonArray arr;
 
-    auto it = s_vfsi->m_routeMap.begin();
-    for (; it != s_vfsi->m_routeMap.end(); it++)
+    auto it = s_vfs_ctx->m_routeMap.begin();
+    for (; it != s_vfs_ctx->m_routeMap.end(); it++)
     {
         QJsonObject obj;
         obj["path"] = it.key();
@@ -83,58 +92,69 @@ static QJsonObject _vfs_virtualfs_list(const QJsonObject& msg)
     return ret;
 }
 
-qfcmd::VfsRouterSession::VfsRouterSession(uintptr_t fh, uint64_t flags)
+qfcmd::VirtualFSInner::VirtualFSInner(const QUrl &url)
 {
-    this->fh = fh;
-    this->flags = flags;
-}
-
-qfcmd::VirtualFSInner::VirtualFSInner()
-{
-    m_fhCnt = 0;
+    m_url = url;
 }
 
 qfcmd::VirtualFSInner::~VirtualFSInner()
 {
 }
 
-qfcmd::VirtualFS::VirtualFS()
+qfcmd::VfsRouterSession::VfsRouterSession(uintptr_t fh, uint64_t flags)
 {
+    this->fh = fh;
+    this->flags = flags;
+}
+
+qfcmd::VirtualFSCtx::VirtualFSCtx()
+{
+    m_fhCnt = 0;
+}
+
+qfcmd::VirtualFSCtx::~VirtualFSCtx()
+{
+}
+
+qfcmd::VirtualFS::VirtualFS(const QUrl& url)
+{
+    m_inner = new VirtualFSInner(url);
 }
 
 qfcmd::VirtualFS::~VirtualFS()
 {
+    delete m_inner;
 }
 
 void qfcmd::VirtualFS::init()
 {
-    if (s_vfsi != nullptr)
+    if (s_vfs_ctx != nullptr)
     {
         return;
     }
 
-    s_vfsi = new VirtualFSInner;
+    s_vfs_ctx = new VirtualFSCtx;
+    VFS::registerVFS("qfcmd", _virtual_fs_mount);
 
-    VFS::registerVFS("qfcmd", _vfs_mount);
-    VFS::mount(QUrl("qfcmd:///"), QUrl("qfcmd:///"));
-
-    route("/vfs/list", _vfs_virtualfs_list);
+    route(QUrl("qfcmd://virtualfs/route/list"), _virtualfs_list);
 }
 
 void qfcmd::VirtualFS::exit()
 {
-    if (s_vfsi == nullptr)
+    if (s_vfs_ctx == nullptr)
     {
         return;
     }
 
-    delete s_vfsi;
-    s_vfsi = nullptr;
+    delete s_vfs_ctx;
+    s_vfs_ctx = nullptr;
 }
 
-void qfcmd::VirtualFS::route(const QString &path, RouterCB cb)
+void qfcmd::VirtualFS::route(const QUrl& url, RouterCB cb)
 {
-    s_vfsi->m_routeMap.insert(path, cb);
+    const QString path = url.toString();
+    VFS::mount(url, url);
+    s_vfs_ctx->m_routeMap.insert(path, cb);
 }
 
 QJsonObject qfcmd::VirtualFS::exchange(const QUrl &url, const QJsonObject &msg)
@@ -170,43 +190,34 @@ read_data:
 
 int qfcmd::VirtualFS::open(uintptr_t *fh, const QUrl &url, uint64_t flags)
 {
-    const QString path = url.path();
+    (void)url;
 
-    auto it = s_vfsi->m_routeMap.upperBound(path);
-    if (it == s_vfsi->m_routeMap.begin())
+    const QString path = m_inner->m_url.toString();
+    auto it = s_vfs_ctx->m_routeMap.find(path);
+    if (it == s_vfs_ctx->m_routeMap.end())
     {
         return -ENOENT;
     }
 
-    do
-    {
-        it--;
-
-        if (path.startsWith(it.key()))
-        {
-            return _vfs_router_open(fh, it.value(), flags);
-        }
-    } while (it != s_vfsi->m_routeMap.begin());
-
-    return -ENOENT;
+    return _vfs_router_open(fh, it.value(), flags);
 }
 
 int qfcmd::VirtualFS::close(uintptr_t fh)
 {
-    auto it = s_vfsi->m_sessionMap.find(fh);
-    if (it == s_vfsi->m_sessionMap.end())
+    auto it = s_vfs_ctx->m_sessionMap.find(fh);
+    if (it == s_vfs_ctx->m_sessionMap.end())
     {
         return -ENOENT;
     }
 
-    s_vfsi->m_sessionMap.erase(it);
+    s_vfs_ctx->m_sessionMap.erase(it);
     return 0;
 }
 
 int qfcmd::VirtualFS::read(uintptr_t fh, void *buf, size_t bufsz)
 {
-    auto it = s_vfsi->m_sessionMap.find(fh);
-    if (it == s_vfsi->m_sessionMap.end())
+    auto it = s_vfs_ctx->m_sessionMap.find(fh);
+    if (it == s_vfs_ctx->m_sessionMap.end())
     {
         return -EINVAL;
     }
@@ -228,8 +239,8 @@ int qfcmd::VirtualFS::read(uintptr_t fh, void *buf, size_t bufsz)
 
 int qfcmd::VirtualFS::write(uintptr_t fh, const void *buf, size_t bufsz)
 {
-    auto it = s_vfsi->m_sessionMap.find(fh);
-    if (it == s_vfsi->m_sessionMap.end())
+    auto it = s_vfs_ctx->m_sessionMap.find(fh);
+    if (it == s_vfs_ctx->m_sessionMap.end())
     {
         return -EINVAL;
     }

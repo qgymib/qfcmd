@@ -2,17 +2,27 @@
 #define QFCMD_VFS_VIRTUALFS_HPP
 
 #include <QJsonObject>
+#include <QUrl>
 #include "filesystem.hpp"
 
 namespace qfcmd {
 
+class VirtualFSInner;
+
 class VirtualFS : public FileSystem
 {
+    Q_OBJECT
+    friend class VirtualFSInner;
+
 public:
     typedef std::function<QJsonObject(const QJsonObject&)> RouterCB;
 
 public:
-    VirtualFS();
+    /**
+     * @brief Initialize the VirtualFS.
+     * @param[in] url - The url mount to.
+     */
+    VirtualFS(const QUrl& url);
     virtual ~VirtualFS();
 
 public:
@@ -21,10 +31,11 @@ public:
 
     /**
      * @brief Route a path to a function.
-     * @param[in] path - Route path.
+     *
+     * @param[in] url - Route url.
      * @param[in] cb   - Callback function.
      */
-    static void route(const QString& path, RouterCB cb);
+    static void route(const QUrl& url, RouterCB cb);
 
     /**
      * @brief Exchange Data from VirtualFS.
@@ -49,6 +60,9 @@ public:
     virtual int close(uintptr_t fh) override;
     virtual int read(uintptr_t fh, void* buf, size_t bufsz) override;
     virtual int write(uintptr_t fh, const void* buf, size_t bufsz) override;
+
+private:
+    VirtualFSInner* m_inner;
 };
 
 } /* namespace qfcmd */

@@ -1,5 +1,7 @@
-
 #include <QMap>
+#include <QWriteLocker>
+#include <QReadWriteLock>
+#include <QReadLocker>
 
 #include "filesystem.hpp"
 #include "vfs.hpp"
@@ -26,6 +28,7 @@ struct VfsInner
     ~VfsInner();
 
     VfsProviderMap      fsMap;      /**< Map of file system provider. */
+    QReadWriteLock      fsMapLock;
 
     /**
      * @brief Map of mount point.
@@ -39,6 +42,7 @@ struct VfsInner
      * The access to `file///foo/bar/1` should return index 2.
      */
     VfsMountMaps        mountMap;
+    QReadWriteLock      mountMapLock;
 };
 
 } /* namespace qfcmd */
@@ -52,12 +56,17 @@ static qfcmd::FileSystem::MountFn _vfs_find_mount_fn_by_url(const QUrl& path, co
     {
         path_scheme = path.scheme();
     }
-    qfcmd::VfsProviderMap::iterator it = s_vfs->fsMap.find(scheme);
-    if (it == s_vfs->fsMap.end())
+
     {
-        return qfcmd::LocalFS::mount;
+        QReadLocker locker(&s_vfs->fsMapLock);
+
+        qfcmd::VfsProviderMap::iterator it = s_vfs->fsMap.find(scheme);
+        if (it == s_vfs->fsMap.end())
+        {
+            return qfcmd::LocalFS::mount;
+        }
+        return it.value();
     }
-    return it.value();
 }
 
 /**
@@ -89,6 +98,8 @@ static QString _vfs_strip_url(const QUrl& url)
 
 static qfcmd::FileSystem::FsPtr _vfs_accessfs(const QUrl& path, QUrl* mount)
 {
+    QReadLocker rlocker(&s_vfs->mountMapLock);
+
     const QString file_path = _vfs_strip_url(path);
 
     auto it = s_vfs->mountMap.upperBound(file_path);
@@ -182,11 +193,14 @@ void qfcmd::VFS::exit()
 
 void qfcmd::VFS::registerVFS(const QString& scheme, const FileSystem::MountFn& fn)
 {
+    QWriteLocker wlocker(&s_vfs->fsMapLock);
     s_vfs->fsMap.insert(scheme, fn);
 }
 
 int qfcmd::VFS::mount(const QUrl& path, const QUrl& src, const QString& scheme)
 {
+    QWriteLocker wlock(&s_vfs->mountMapLock);
+
     /* Search for mount point. */
     const QString mount_path = _vfs_strip_url(path);
     VfsMountMaps::iterator it = s_vfs->mountMap.find(mount_path);
@@ -214,6 +228,8 @@ int qfcmd::VFS::mount(const QUrl& path, const QUrl& src, const QString& scheme)
 
 int qfcmd::VFS::unmount(const QUrl& path)
 {
+    QWriteLocker wlock(&s_vfs->mountMapLock);
+
     const QString mount_path = _vfs_strip_url(path);
     VfsMountMaps::iterator it = s_vfs->mountMap.find(mount_path);
     if (it == s_vfs->mountMap.end())

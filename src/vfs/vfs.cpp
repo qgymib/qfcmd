@@ -60,7 +60,7 @@ static qfcmd::FileSystem::MountFn _vfs_find_mount_fn_by_url(const QUrl& path, co
     {
         QReadLocker locker(&s_vfs->fsMapLock);
 
-        qfcmd::VfsProviderMap::iterator it = s_vfs->fsMap.find(scheme);
+        qfcmd::VfsProviderMap::iterator it = s_vfs->fsMap.find(path_scheme);
         if (it == s_vfs->fsMap.end())
         {
             return qfcmd::LocalFS::mount;
@@ -112,12 +112,12 @@ static qfcmd::FileSystem::FsPtr _vfs_accessfs(const QUrl& path, QUrl* mount)
     {
         it--;
 
-        if (file_path.startsWith(it.key()))
+        const QString it_key = it.key();
+        if (file_path.startsWith(it_key))
         {
             if (mount != nullptr)
             {
-                const QString mount_path = it.key();
-                *mount = QUrl(mount_path);
+                *mount = QUrl(it_key);
             }
 
             return it.value();

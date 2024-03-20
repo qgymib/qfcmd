@@ -8,6 +8,7 @@
 #include "virtual.hpp"
 #include "vfs.hpp"
 #include "file.hpp"
+#include "utils/serialization.hpp"
 
 namespace qfcmd {
 
@@ -21,7 +22,13 @@ public:
     QUrl    m_url;
 };
 
-typedef QMap<QString, VirtualFS::RouterCB> VfsRouterMap;
+struct VfsRouterRecord
+{
+    uint64_t flags;
+    VirtualFS::RouterCB cb;
+};
+
+typedef QMap<QString, VfsRouterRecord> VfsRouterMap;
 
 struct VfsRouterSession
 {
@@ -29,9 +36,10 @@ struct VfsRouterSession
 
     uintptr_t               fh;
     uint64_t                flags;
-    VirtualFS::RouterCB     cb;
+    VfsRouterRecord         rec;
 
     QByteArray              sendCache;
+    bool                    readed;
 };
 
 typedef QSharedPointer<VfsRouterSession> VfsRouterSessionPtr;
@@ -54,13 +62,14 @@ public:
 static qfcmd::VirtualFSCtx* s_vfs_ctx = nullptr;
 
 static int _vfs_router_open(uintptr_t* fh,
-                            const qfcmd::VirtualFS::RouterCB& cb,
+                            const qfcmd::VfsRouterRecord& rec,
                             uint64_t flags)
 {
     *fh = s_vfs_ctx->m_fhCnt++;
 
     qfcmd::VfsRouterSessionPtr session(new qfcmd::VfsRouterSession(*fh, flags));
-    session->cb = cb;
+    session->rec = rec;
+    session->rec.flags = flags;
 
     s_vfs_ctx->m_sessionMap.insert(session->fh, session);
 
@@ -83,13 +92,30 @@ static QJsonObject _virtualfs_list(const QJsonObject& msg)
     auto it = s_vfs_ctx->m_routeMap.begin();
     for (; it != s_vfs_ctx->m_routeMap.end(); it++)
     {
-        QJsonObject obj;
-        obj["path"] = it.key();
-        arr.append(obj);
+        arr.append(it.key());
     }
 
     ret["result"] = arr;
     return ret;
+}
+
+static int _virtual_fs_read_once(qfcmd::VfsRouterSessionPtr session, void* buf, size_t bufsz)
+{
+    if (!session->readed)
+    {
+        session->readed = true;
+        QJsonObject out = session->rec.cb(QJsonObject());
+        session->sendCache = qfcmd::Serialize(out);
+    }
+
+    const char* data = session->sendCache.data();
+    qsizetype data_sz = session->sendCache.size();
+    size_t min_copy_sz = qMin((size_t)data_sz, bufsz);
+
+    memcpy(buf, data, min_copy_sz);
+    session->sendCache.remove(0, min_copy_sz);
+
+    return min_copy_sz;
 }
 
 qfcmd::VirtualFSInner::VirtualFSInner(const QUrl &url)
@@ -105,6 +131,7 @@ qfcmd::VfsRouterSession::VfsRouterSession(uintptr_t fh, uint64_t flags)
 {
     this->fh = fh;
     this->flags = flags;
+    this->readed = false;
 }
 
 qfcmd::VirtualFSCtx::VirtualFSCtx()
@@ -136,7 +163,7 @@ void qfcmd::VirtualFS::init()
     s_vfs_ctx = new VirtualFSCtx;
     VFS::registerVFS("qfcmd", _virtual_fs_mount);
 
-    route(QUrl("qfcmd://virtualfs/route/list"), _virtualfs_list);
+    route(QUrl("qfcmd://virtualfs/route/list"), QFCMD_FS_O_RDONLY, _virtualfs_list);
 }
 
 void qfcmd::VirtualFS::exit()
@@ -150,35 +177,39 @@ void qfcmd::VirtualFS::exit()
     s_vfs_ctx = nullptr;
 }
 
-void qfcmd::VirtualFS::route(const QUrl& url, RouterCB cb)
+void qfcmd::VirtualFS::route(const QUrl& url, uint64_t flags, RouterCB cb)
 {
     const QString path = url.toString();
     VFS::mount(url, url);
-    s_vfs_ctx->m_routeMap.insert(path, cb);
+
+    /* Remove unnecessary flags */
+    flags &= QFCMD_FS_O_RDWR;
+
+    VfsRouterRecord rec;
+    rec.cb = cb;
+    rec.flags = flags;
+    s_vfs_ctx->m_routeMap.insert(path, rec);
 }
 
-QJsonObject qfcmd::VirtualFS::exchange(const QUrl &url, const QJsonObject &msg)
+QJsonObject qfcmd::VirtualFS::exchange(const QUrl &url, uint64_t flags, const QJsonObject &msg)
 {
     int ret;
     VFile file;
     QJsonObject result;
     QByteArray cache;
 
-    if (msg.isEmpty())
-    {
-        goto read_data;
-    }
-    cache = QJsonDocument(msg).toJson();
-
-    if ((ret = file.open(url, QFCMD_FS_O_RDWR)) != 0)
+    if ((ret = file.open(url, flags)) != 0)
     {
         result["error"] = ret;
         return result;
     }
 
-    file.write(cache);
+    if (!msg.isEmpty())
+    {
+        cache = QJsonDocument(msg).toJson();
+        file.write(cache);
+    }
 
-read_data:
     cache.clear();
     file.read(cache);
 
@@ -192,14 +223,30 @@ int qfcmd::VirtualFS::open(uintptr_t *fh, const QUrl &url, uint64_t flags)
 {
     (void)url;
 
+    /* Remove unnecessary flags. */
+    flags &= QFCMD_FS_O_RDWR;
+
     const QString path = m_inner->m_url.toString();
     auto it = s_vfs_ctx->m_routeMap.find(path);
     if (it == s_vfs_ctx->m_routeMap.end())
     {
         return -ENOENT;
     }
+    VfsRouterRecord record = it.value();
 
-    return _vfs_router_open(fh, it.value(), flags);
+    /*
+     * The provider and the consumer must share compatible flags:
+     * If provider is #QFCMD_FS_O_RDONLY, the consumer must be #QFCMD_FS_O_RDONLY.
+     * If provider is #QFCMD_FS_O_WRONLY, the consumer must be #QFCMD_FS_O_WRONLY.
+     * If provider is #QFCMD_FS_O_RDWR, the consumer can be #QFCMD_FS_O_RDWR or #QFCMD_FS_O_WRONLY.
+    */
+    uint64_t comb_flags = record.flags & flags;
+    if (comb_flags == 0 || comb_flags != flags)
+    {
+        return -EPERM;
+    }
+
+    return _vfs_router_open(fh, record, comb_flags);
 }
 
 int qfcmd::VirtualFS::close(uintptr_t fh)
@@ -222,6 +269,12 @@ int qfcmd::VirtualFS::read(uintptr_t fh, void *buf, size_t bufsz)
         return -EINVAL;
     }
     VfsRouterSessionPtr session = it.value();
+
+    /* This session is opend as read-only, just call route and read output */
+    if (session->rec.flags == QFCMD_FS_O_RDONLY)
+    {
+        return _virtual_fs_read_once(session, buf, bufsz);
+    }
 
     const char* data = session->sendCache.data();
     qsizetype data_sz = session->sendCache.size();
@@ -246,6 +299,12 @@ int qfcmd::VirtualFS::write(uintptr_t fh, const void *buf, size_t bufsz)
     }
     VfsRouterSessionPtr session = it.value();
 
+    /* This session is opend as write-only, no need to save response. */
+    if (session->rec.flags == QFCMD_FS_O_WRONLY)
+    {
+        return bufsz;
+    }
+
     QByteArray jsonData(static_cast<const char*>(buf), bufsz);
     QJsonDocument jsonDoc = QJsonDocument::fromJson(jsonData);
     if (jsonDoc.isNull())
@@ -254,14 +313,13 @@ int qfcmd::VirtualFS::write(uintptr_t fh, const void *buf, size_t bufsz)
     }
     QJsonObject jsonObj = jsonDoc.object();
 
-    QJsonObject jsonRsp = session->cb(jsonObj);
+    QJsonObject jsonRsp = session->rec.cb(jsonObj);
     if (jsonRsp.isEmpty())
     {
         return bufsz;
     }
 
-    QJsonDocument writeDoc(jsonRsp);
-    QByteArray writeData = writeDoc.toJson();
+    QByteArray writeData = Serialize(jsonRsp);
     session->sendCache.append(writeData);
 
     return bufsz;

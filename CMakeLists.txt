@@ -55,6 +55,8 @@ set(PROJECT_SOURCES
         src/utils/container.cpp
         src/utils/log.hpp
         src/utils/log.cpp
+        src/utils/serialization.hpp
+        src/utils/serialization.cpp
         src/utils/win32.hpp
         src/utils/win32.cpp
         # Settings

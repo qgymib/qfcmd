@@ -31,11 +31,11 @@ public:
 
     /**
      * @brief Route a path to a function.
-     *
      * @param[in] url - Route url.
+     * @param[in] flags - File attributes. See #qfcmd_fs_open_flag_t.
      * @param[in] cb   - Callback function.
      */
-    static void route(const QUrl& url, RouterCB cb);
+    static void route(const QUrl& url, uint64_t flags, RouterCB cb);
 
     /**
      * @brief Exchange Data from VirtualFS.
@@ -50,10 +50,11 @@ public:
      * + `error`: This member is REQUIRED on failure and not exist when success.
      *
      * @param[in] url - URL
+     * @param[in] flags - File attributes. See #qfcmd_fs_open_flag_t.
      * @param[in] msg - Request message.
      * @return Response message.
      */
-    static QJsonObject exchange(const QUrl& url, const QJsonObject& msg);
+    static QJsonObject exchange(const QUrl& url, uint64_t flags, const QJsonObject& msg);
 
 public:
     virtual int open(uintptr_t* fh, const QUrl& url, uint64_t flags) override;
